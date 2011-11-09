@@ -498,9 +498,9 @@ void PHYSFSX_addArchiveContent()
 		d_free(file[0]);
 		d_free(file[1]);
 	}
+	PHYSFS_freeList(list);
 #endif
 
-	PHYSFS_freeList(list);
 	list = NULL;
 
 	if (content_updated)

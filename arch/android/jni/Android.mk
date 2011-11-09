@@ -17,6 +17,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := native-activity
+LOCAL_ARM_MODE  := arm
 LOCAL_SRC_FILES := main.c \
   ../../../2d/2dsline.c \
   ../../../2d/bitblt.c \
@@ -127,21 +128,48 @@ LOCAL_SRC_FILES := main.c \
   ../../../texmap/ntmap.c \
   ../../../texmap/scanline.c \
   ../../../main/multibot.c \
-  ../../../arch/hal/digi_null.c \
-  ../../../arch/hal/digi.c \
-  ../../../arch/hal/event.c \
-  ../../../arch/hal/gr.c \
-  ../../../arch/hal/ogl.c \
-  ../../../arch/hal/init.c \
-  ../../../arch/hal/joy.c \
-  ../../../arch/hal/key.c \
-  ../../../arch/hal/mouse.c \
-  ../../../arch/hal/rbaudio.c \
-  ../../../arch/hal/timer.c \
-  ../../../arch/hal/window.c
+  digi_null.c \
+  digi.c \
+  event.c \
+  gr.c \
+  ogl.c \
+  init.c \
+  joy.c \
+  key.c \
+  mouse.c \
+  rbaudio.c \
+  timer.c \
+  window.c \
+  ../../../physfs-1.1.1/physfs.c \
+  ../../../physfs-1.1.1/physfs_byteorder.c \
+  ../../../physfs-1.1.1/physfs_unicode.c \
+  ../../../physfs-1.1.1/platform/os2.c \
+  ../../../physfs-1.1.1/platform/pocketpc.c \
+  ../../../physfs-1.1.1/platform/posix.c \
+  ../../../physfs-1.1.1/platform/unix.c \
+  ../../../physfs-1.1.1/platform/macosx.c \
+  ../../../physfs-1.1.1/platform/windows.c \
+  ../../../physfs-1.1.1/archivers/dir.c \
+  ../../../physfs-1.1.1/archivers/grp.c \
+  ../../../physfs-1.1.1/archivers/hog.c \
+  ../../../physfs-1.1.1/archivers/lzma.c \
+  ../../../physfs-1.1.1/archivers/mvl.c \
+  ../../../physfs-1.1.1/archivers/qpak.c \
+  ../../../physfs-1.1.1/archivers/wad.c \
+  ../../../physfs-1.1.1/archivers/zip.c \
+  ../../../physfs-1.1.1/lzma/7zBuffer.c \
+  ../../../physfs-1.1.1/lzma/7zCrc.c \
+  ../../../physfs-1.1.1/lzma/7zDecode.c \
+  ../../../physfs-1.1.1/lzma/7zExtract.c \
+  ../../../physfs-1.1.1/lzma/7zHeader.c \
+  ../../../physfs-1.1.1/lzma/7zIn.c \
+  ../../../physfs-1.1.1/lzma/7zItem.c \
+  ../../../physfs-1.1.1/lzma/7zMethodID.c \
+  ../../../physfs-1.1.1/lzma/LzmaDecode.c \
+  ../../../physfs-1.1.1/lzma/LzmaStateDecode.c
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../ $(LOCAL_PATH)/../../../include/ $(LOCAL_PATH)/../../../main/ $(LOCAL_PATH)/../../../arch/include/
-LOCAL_CFLAGS := -DNETWORK -DOGL -DOPENGLES
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../ $(LOCAL_PATH)/../../../include/ $(LOCAL_PATH)/../../../main/ $(LOCAL_PATH)/../../../arch/include/ $(LOCAL_PATH)/../../../physfs-1.1.1/
+LOCAL_CFLAGS := -DNETWORK -DOGL -DOPENGLES -D_SZ_ONE_DIRECTORY -Dunix -DPHYSFS_NO_CDROM_SUPPORT -DPHYSFS_SUPPORTS_HOG
 LOCAL_LDLIBS := -llog -landroid -lEGL -lGLESv1_CM
 LOCAL_STATIC_LIBRARIES := android_native_app_glue
 

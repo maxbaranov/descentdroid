@@ -21,7 +21,6 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <SDL/SDL.h>
 #include <setjmp.h>
 
 #ifdef OGL
@@ -714,11 +713,7 @@ int allowed_to_fire_missile(void)
 
 extern int Death_sequence_aborted;
 
-#ifdef USE_SDLMIXER
-#define EXT_MUSIC_TEXT "Jukebox/Audio CD"
-#else
 #define EXT_MUSIC_TEXT "Audio CD"
-#endif
 
 static int free_help(newmenu *menu, d_event *event, void *userdata)
 {

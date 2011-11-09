@@ -95,8 +95,6 @@ COPYRIGHT 1993-1999 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "editor/editor.h"
 #endif
 
-#include <SDL/SDL.h>
-
 // Global Variables -----------------------------------------------------------
 
 int	Debug_spew;

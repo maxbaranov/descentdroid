@@ -696,7 +696,7 @@ int state_save_old_game(int slotnum, char * sg_name, player_rw * sg_player,
 
 #ifdef OGL
 		buf = d_malloc(THUMBNAIL_W * THUMBNAIL_H * 4);
-#ifndef OGLES
+#ifndef OPENGLES
  		glGetIntegerv(GL_DRAW_BUFFER, &gl_draw_buffer);
  		glReadBuffer(gl_draw_buffer);
 #endif
@@ -860,7 +860,7 @@ int state_save_all_sub(char *filename, char *desc)
 
 #if defined(OGL)
 		buf = d_malloc(THUMBNAIL_W * THUMBNAIL_H * 4);
-#ifndef OGLES
+#ifndef OPENGLES
  		glGetIntegerv(GL_DRAW_BUFFER, &gl_draw_buffer);
  		glReadBuffer(gl_draw_buffer);
 #endif

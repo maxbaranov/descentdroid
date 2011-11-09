@@ -29,7 +29,6 @@ char copyright[] = "DESCENT   COPYRIGHT (C) 1994,1995 PARALLAX SOFTWARE CORPORAT
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <SDL/SDL.h>
 
 #ifdef __unix__
 #include <unistd.h>
@@ -123,9 +122,6 @@ void print_commandline_help()
 	printf( "\n Sound:\n\n");
 	printf( "  -nosound                      Disables sound output\n");
 	printf( "  -nomusic                      Disables music output\n");
-#ifdef    USE_SDLMIXER
-	printf( "  -nosdlmixer                   Disable Sound output via SDL_mixer\n");
-#endif // USE SDLMIXER
 
 	printf( "\n Graphics:\n\n");
 	printf( "  -lowresfont                   Force to use LowRes fonts\n");
@@ -165,17 +161,12 @@ void print_commandline_help()
 	printf( "  -nodoublebuffer               Disable Doublebuffering\n");
 	printf( "  -bigpig                       Use uncompressed RLE bitmaps\n");
 	printf( "  -16bpp                        Use 16Bpp instead of 32Bpp\n");
-#ifdef    OGL
 	printf( "  -gl_oldtexmerge               Use old texmerge, uses more ram, but might be faster\n");
 	printf( "  -gl_intensity4_ok <n>         Override DbgGlIntensity4Ok (default: 1)\n");
 	printf( "  -gl_luminance4_alpha4_ok <n>  Override DbgGlLuminance4Alpha4Ok (default: 1)\n");
 	printf( "  -gl_rgba2_ok <n>              Override DbgGlRGBA2Ok (default: 1)\n");
 	printf( "  -gl_readpixels_ok <n>         Override DbgGlReadPixelsOk (default: 1)\n");
 	printf( "  -gl_gettexlevelparam_ok <n>   Override DbgGlGetTexLevelParamOk (default: 1)\n");
-#else
-	printf( "  -hwsurface                    Use SDL HW Surface\n");
-	printf( "  -asyncblit                    Use queued blits over SDL. Can speed up rendering\n");
-#endif // OGL
 
 	printf( "\n Help:\n\n");
 	printf( "  -help, -h, -?, ?             View this help screen\n");
@@ -286,10 +277,10 @@ jmp_buf LeaveEvents;
 //	DESCENT by Parallax Software
 //		Descent Main
 
-int main(int argc, char *argv[])
+int SecondMain(int argc, char *argv[])
 {
 	mem_init();
-#ifdef __LINUX__
+#if defined(__LINUX__) || defined(ANDROID)
 	error_init(NULL, NULL);
 #else
 	error_init(msgbox_error, NULL);

@@ -17,6 +17,10 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
  *
  */
 
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

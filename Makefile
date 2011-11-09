@@ -1,9 +1,11 @@
 CC := gcc
+AR := ar
 CFLAGS := -g -Wall -DNETWORK -DOGL -I. -Iinclude/ -Imain/ -Iarch/include/
-LDFLAGS := -g -lphysfs -lm -lGL -lGLU -lSDL
-# -lSDL_mixer
+LDFLAGS := -g -lm -lGL -lGLU -lSDL
 
-OBJS := 2d/2dsline.o \
+OBJS :=
+
+OBJS += 2d/2dsline.o \
   2d/bitblt.o \
   2d/bitmap.o \
   2d/box.o \
@@ -125,47 +127,11 @@ OBJS := 2d/2dsline.o \
   arch/hal/timer.o \
   arch/hal/window.o
 
-#  arch/hal/digi_mixer_music.o \
-#  arch/hal/digi_mixer.o \
-#  arch/hal/jukebox.o \
-
-
-#  main/net_udp.o \
-#  main/net_ipx.o \
-#  arch/linux/ipx.o \
-#  arch/linux/ipx_kali.o \
-#  arch/linux/ukali.o \
-#  arch/ogl/ogl.o \
-#  arch/ogl/gr.o \
-#  arch/sdl/timer.o \
-#  arch/sdl/digi.o \
-#  arch/sdl/digi_audio.o \
-#  arch/sdl/digi_mixer.o \
-#  arch/sdl/digi_mixer_music.o \
-#  arch/sdl/event.o \
-#  arch/sdl/init.o \
-#  arch/sdl/key.o \
-#  arch/sdl/mouse.o \
-#  arch/sdl/window.o \
-#  arch/sdl/joy.o \
-#  arch/sdl/rbaudio.o \
-
-
-
-
-#  arch/sdl/jukebox.o \
-
-
-
-
-# Not available for SHAREWARE
-#  main/multi.o \
-
-
-
 all: descentdroid
 
-clean:
+include physfs-1.1.1/descentdroid.mk
+
+clean: cleanphysfs
 	@echo "CLEAN"
 	@rm -f descentdroid $(OBJS)
 
