@@ -7,9 +7,7 @@
 #ifndef _TYPES_H
 #define _TYPES_H
 
-#ifndef macintosh
 #include <sys/types.h>
-#endif
 
 #include <limits.h>
 
@@ -21,22 +19,12 @@ typedef signed char sbyte;
 
 //define unsigned types;
 typedef unsigned char ubyte;
-#if defined(_WIN32) || defined(macintosh)
+#ifdef ANDROID
 typedef unsigned short ushort;
+#else
 typedef unsigned int uint;
 #endif
 
-#if defined(_WIN32) || defined(__sun__) // platforms missing (u_)int??_t
-# include <SDL/SDL_types.h>
-#elif defined(macintosh) // misses (u_)int??_t and does not like SDL_types.h
-# include <MacTypes.h>
- typedef SInt16 int16_t;
- typedef SInt32 int32_t;
- typedef SInt64 int64_t;
- typedef UInt16 u_int16_t;
- typedef UInt32 u_int32_t;
- typedef UInt64 u_int64_t;
-#endif // macintosh
 #if defined(_WIN32) || defined(__sun__) // platforms missing u_int??_t
  typedef Uint16 u_int16_t;
  typedef Uint32 u_int32_t;

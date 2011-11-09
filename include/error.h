@@ -23,7 +23,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include <stdio.h>
 
 #ifdef __GNUC__
+#ifndef __noreturn
 #define __noreturn __attribute__ ((noreturn))
+#endif
 #define __format __attribute__ ((format (printf, 1, 2)))
 #else
 #define __noreturn

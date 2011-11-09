@@ -1,0 +1,2 @@
+cd arch/android/
+~/android/android-ndk-r6b/ndk-build -C . NDK_PROJECT_PATH=.
