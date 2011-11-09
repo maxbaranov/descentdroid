@@ -110,27 +110,42 @@ OBJS := 2d/2dsline.o \
   misc/strutil.o \
   texmap/ntmap.o \
   texmap/scanline.o \
-  arch/ogl/ogl.o \
-  arch/ogl/gr.o \
-  arch/sdl/timer.o \
-  arch/sdl/digi.o \
-  arch/sdl/digi_audio.o \
-  arch/sdl/digi_mixer.o \
-  arch/sdl/digi_mixer_music.o \
-  arch/sdl/event.o \
-  arch/sdl/init.o \
-  arch/sdl/key.o \
-  arch/sdl/mouse.o \
-  arch/sdl/window.o \
-  arch/sdl/joy.o \
-  arch/sdl/rbaudio.o \
-  main/multibot.o
+  main/multibot.o \
+  arch/hal/digi_audio.o \
+  arch/hal/digi.o \
+  arch/hal/digi_mixer.o \
+  arch/hal/digi_mixer_music.o \
+  arch/hal/event.o \
+  arch/hal/gr.o \
+  arch/hal/init.o \
+  arch/hal/joy.o \
+  arch/hal/jukebox.o \
+  arch/hal/key.o \
+  arch/hal/mouse.o \
+  arch/hal/ogl.o \
+  arch/hal/rbaudio.o \
+  arch/hal/timer.o \
+  arch/hal/window.o
 
 #  main/net_udp.o \
 #  main/net_ipx.o \
 #  arch/linux/ipx.o \
 #  arch/linux/ipx_kali.o \
 #  arch/linux/ukali.o \
+#  arch/ogl/ogl.o \
+#  arch/ogl/gr.o \
+#  arch/sdl/timer.o \
+#  arch/sdl/digi.o \
+#  arch/sdl/digi_audio.o \
+#  arch/sdl/digi_mixer.o \
+#  arch/sdl/digi_mixer_music.o \
+#  arch/sdl/event.o \
+#  arch/sdl/init.o \
+#  arch/sdl/key.o \
+#  arch/sdl/mouse.o \
+#  arch/sdl/window.o \
+#  arch/sdl/joy.o \
+#  arch/sdl/rbaudio.o \
 
 
 
