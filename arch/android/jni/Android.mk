@@ -140,6 +140,7 @@ LOCAL_SRC_FILES := main.c \
   rbaudio.c \
   timer.c \
   window.c \
+  ipc.c \
   ../../../physfs-1.1.1/physfs.c \
   ../../../physfs-1.1.1/physfs_byteorder.c \
   ../../../physfs-1.1.1/physfs_unicode.c \

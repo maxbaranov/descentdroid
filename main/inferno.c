@@ -309,11 +309,7 @@ int gameloop_init(int argc, char *argv[])
 	if (!PHYSFSX_checkSupportedArchiveTypes())
 		return(0);
 
-#ifdef ANDROID
-	if (! PHYSFSX_contfile_init("/sdcard/descent.hog", 1))
-#else
 	if (! PHYSFSX_contfile_init("descent.hog", 1))
-#endif
 		Error("Could not find a valid hog file (descent.hog)\nPossible locations are:\n"
 		      "---unknown--\n"
 			  "Or use the -hogdir option to specify an alternate location.");

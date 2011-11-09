@@ -41,6 +41,10 @@ typedef struct d_event_keycommand
 
 char *key_text[256];
 
+void key_setkeyd_pressed(int ndx,unsigned char val) {
+  keyd_pressed[ndx] = val;
+}
+
 int key_ismodlck(int keycode)
 {
 	switch (keycode)

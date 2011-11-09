@@ -15,6 +15,8 @@
 #include <android/log.h>
 #include <android_native_app_glue.h>
 
+#include "ipc.h"
+
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "descent", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "descent", __VA_ARGS__))
 
@@ -237,6 +239,27 @@
 #define QK_UNDO				339
 #define QK_CONSOLE			340
 
+/**
+ * Shared state for our app.
+ */
+struct engine 
+{
+    struct android_app* app;
+
+    ASensorManager* sensorManager;
+    const ASensor* accelerometerSensor;
+    ASensorEventQueue* sensorEventQueue;
+
+    int animating;
+    EGLDisplay display;
+    EGLSurface surface;
+    EGLContext context;
+    int32_t width;
+    int32_t height;
+};
+
+
+
 /* Containts the path to /data/data/(package_name)/libs */
 static char* lib_dir=NULL;
 
@@ -284,10 +307,77 @@ int  gameloop_init(int argc, char *argv[]);
 int  gameloop_tick(void);
 void gameloop_cleanup(void);
 
-void *gamethread_fn(void *arg) {
-  char *argv[] = { "descent" };
+#if 1
+void ogl_set_sd(EGLSurface s,EGLDisplay d);
 
-  gameloop_init(1,argv);
+int createGLESContext(struct engine *engine) {
+    /*
+     * Here specify the attributes of the desired configuration.
+     * Below, we select an EGLConfig with at least 8 bits per color
+     * component compatible with on-screen windows
+     */
+    const EGLint attribs[] = {
+      EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+      EGL_BLUE_SIZE, 5,
+      EGL_GREEN_SIZE, 6,
+      EGL_RED_SIZE, 5,
+      EGL_DEPTH_SIZE, 8,
+      EGL_NONE
+    };
+    EGLint w, h, dummy, format;
+    EGLint numConfigs;
+    EGLConfig config;
+    EGLSurface surface;
+    EGLContext context;
+
+    EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+
+    eglInitialize(display, 0, 0);
+
+    /* Here, the application chooses the configuration it desires. In this
+     * sample, we have a very simplified selection process, where we pick
+     * the first EGLConfig that matches our criteria */
+    eglChooseConfig(display, attribs, &config, 1, &numConfigs);
+
+    /* EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
+     * guaranteed to be accepted by ANativeWindow_setBuffersGeometry().
+     * As soon as we picked a EGLConfig, we can safely reconfigure the
+     * ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID. */
+    eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
+
+    ANativeWindow_setBuffersGeometry(engine->app->window, 0, 0, format);
+
+    surface = eglCreateWindowSurface(display, config, engine->app->window, NULL);
+    context = eglCreateContext(display, config, NULL, NULL);
+
+    if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
+        LOGW("Unable to eglMakeCurrent");
+        return -1;
+    }
+
+    eglQuerySurface(display, surface, EGL_WIDTH, &w);
+    eglQuerySurface(display, surface, EGL_HEIGHT, &h);
+
+    engine->display = display;
+    engine->context = context;
+    engine->surface = surface;
+    engine->width = w;
+    engine->height = h;
+    engine->animating = 1;
+
+    ogl_set_sd(surface,display);
+
+    return 0;
+}
+
+void *gamethread_fn(void *arg) {
+  struct engine* engine = (struct engine*)arg;
+  char *argv[] = { "descent","-hogdir","/sdcard/Descent/", NULL };
+
+  if( createGLESContext(engine) != 0 )
+    return NULL;
+
+  gameloop_init(3,argv);
 
   while(gameloop_tick() == 0) { }
 
@@ -295,23 +385,28 @@ void *gamethread_fn(void *arg) {
 
   return NULL;
 }
+#endif
 
-void InitGame(int width, int height)
+void InitGame(struct engine* engine)
 {
-    char *argv[4];
-    int argc=0;
+  char *argv[] = { "descent","-hogdir","/sdcard/Descent/",NULL };
+  int argc = 3;
 
     if(!init) {
 
+#if 1
       pthread_t gameThread;
-      pthread_create(&gameThread,NULL,gamethread_fn,NULL);
+      pthread_create(&gameThread,NULL,gamethread_fn,engine);
+#else
+      gameloop_init(argc,argv);
+#endif
 
       //
       init = 1;
     }
 
 #ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "initGame(%d, %d)", width, height);
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "initGame(%p)", engine);
 #endif
 
     //setAudioCallbacks(&GetPos, &WriteAudio, &InitAudio);
@@ -365,121 +460,6 @@ void RequestAudioData()
 }
 
 /**
- * Shared state for our app.
- */
-struct engine 
-{
-    struct android_app* app;
-
-    ASensorManager* sensorManager;
-    const ASensor* accelerometerSensor;
-    ASensorEventQueue* sensorEventQueue;
-
-    int animating;
-    EGLDisplay display;
-    EGLSurface surface;
-    EGLContext context;
-    int32_t width;
-    int32_t height;
-};
-
-void ogl_set_sd(EGLSurface s,EGLDisplay d);
-
-/**
- * Initialize an EGL context for the current display.
- */
-static int engine_init_display(struct engine* engine) 
-{
-    // initialize OpenGL ES and EGL
-
-    /*
-     * Here specify the attributes of the desired configuration.
-     * Below, we select an EGLConfig with at least 8 bits per color
-     * component compatible with on-screen windows
-     */
-    const EGLint attribs[] = 
-	{
-            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-            EGL_BLUE_SIZE, 5,
-            EGL_GREEN_SIZE, 6,
-            EGL_RED_SIZE, 5,
-    		EGL_DEPTH_SIZE, 8,
-    		EGL_NONE
-    };
-    EGLint w, h, dummy, format;
-    EGLint numConfigs;
-    EGLConfig config;
-    EGLSurface surface;
-    EGLContext context;
-
-    EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-
-    eglInitialize(display, 0, 0);
-
-    /* Here, the application chooses the configuration it desires. In this
-     * sample, we have a very simplified selection process, where we pick
-     * the first EGLConfig that matches our criteria */
-    eglChooseConfig(display, attribs, &config, 1, &numConfigs);
-
-    /* EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
-     * guaranteed to be accepted by ANativeWindow_setBuffersGeometry().
-     * As soon as we picked a EGLConfig, we can safely reconfigure the
-     * ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID. */
-    eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
-
-    ANativeWindow_setBuffersGeometry(engine->app->window, 0, 0, format);
-
-    surface = eglCreateWindowSurface(display, config, engine->app->window, NULL);
-    context = eglCreateContext(display, config, NULL, NULL);
-
-    if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) 
-	{
-        LOGW("Unable to eglMakeCurrent");
-        return -1;
-    }
-
-    eglQuerySurface(display, surface, EGL_WIDTH, &w);
-    eglQuerySurface(display, surface, EGL_HEIGHT, &h);
-
-    engine->display = display;
-    engine->context = context;
-    engine->surface = surface;
-    engine->width = w;
-    engine->height = h;
-    engine->animating = 1;
-
-    // Initialize GL state.
-    //glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-    //glEnable(GL_CULL_FACE);
-    //glShadeModel(GL_SMOOTH);
-    //glDisable(GL_DEPTH_TEST);
-
-    ogl_set_sd(surface,display);
-
-    return 0;
-}
-
-/**
- * Just the current frame in the display.
- */
-static void engine_draw_frame(struct engine* engine) 
-{
-    if (engine->display == NULL) 
-	{
-        // No display.
-        return;
-    }
-
-    // Just fill the screen with a color.
-    //glClearColor(1,0,0,1);
-    //glClear(GL_COLOR_BUFFER_BIT);
-
-    DrawFrame();
-	
-    eglSwapBuffers(engine->display, engine->surface);
-}
-
-/**
  * Tear down the EGL context currently associated with the display.
  */
 static void engine_term_display(struct engine* engine) 
@@ -503,9 +483,32 @@ static void engine_term_display(struct engine* engine)
     engine->surface = EGL_NO_SURFACE;
 }
 
-static int androidKeyCodeToQuake(AInputEvent* event)
+static int androidKeyCodeToDescent(AInputEvent* aevent,int state)
 {	
-	int32_t a_keycode = (AKeyEvent_getKeyCode)(event);
+  int32_t a_keycode = (AKeyEvent_getKeyCode)(aevent);
+  IPCEvent_t ev;
+  int bHasEvent = 0;
+
+  ev.type = eEventType_Key;
+  ev.key.state = !!state;
+
+  switch(a_keycode) {
+  case AKEYCODE_BUTTON_L1:
+    ev.key.key = eEventKey_L1; // ESC
+    bHasEvent  = 1;
+    break;
+  case AKEYCODE_BUTTON_R1:
+    ev.key.key = eEventKey_R1; // ENTER
+    bHasEvent  = 1;
+    break;
+  }
+
+  IPCEvent_Post(&ev);
+  //__android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "androidKeyCodeToDescent(%i,%d,%d)",a_keycode,ev.key.key,ev.key.state);
+
+  return -!!bHasEvent;
+
+#if 0
 	/* Convert non-ASCII keys by hand */
 	switch(a_keycode)
 	{
@@ -542,6 +545,7 @@ static int androidKeyCodeToQuake(AInputEvent* event)
 			return QK_SHIFT;
 	}
 	return 0;
+#endif
 }
 
 /**
@@ -562,9 +566,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event)
 			int nValue = 0;
 			if( nKeyAction == AKEY_EVENT_ACTION_DOWN )
 				nValue = 1;
-			int nQuakeKey = androidKeyCodeToQuake(event);
-			if (nQuakeKey != 0)
-				QueueKeyEvent(nQuakeKey, nValue);
+			int nQuakeKey = androidKeyCodeToDescent(event,nValue);
 		}
 		return 1;
 		
@@ -610,15 +612,13 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd)
             break;
         case APP_CMD_INIT_WINDOW:
             // The window is being shown, get it ready.
-            if (engine->app->window != NULL) 
-			{
-                engine_init_display(engine);
-				if (!bInit)
-				{
-					InitGame(engine->width, engine->height);
-					bInit = 1;
-				}
-                engine_draw_frame(engine);
+            if (engine->app->window != NULL) {
+	      //engine_init_display(engine);
+	      if (!bInit) {
+		InitGame(engine);
+		bInit = 1;
+	      }
+	      //engine_draw_frame(engine);
             }
             break;
         case APP_CMD_TERM_WINDOW:
@@ -648,7 +648,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd)
             }
             // Also stop animating.
             engine->animating = 0;
-            engine_draw_frame(engine);
+            //engine_draw_frame(engine);
             break;
     }
 }
@@ -744,7 +744,7 @@ void android_main(struct android_app* state)
 
             // Drawing is throttled to the screen update rate, so there
             // is no need to do timing here.
-            engine_draw_frame(&engine);
+		  //engine_draw_frame(&engine);
         }
     }
 }

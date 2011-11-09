@@ -13,15 +13,56 @@
 #include "window.h"
 #include "timer.h"
 #include "main/config.h"
+#include "ipc.h"
 
 static int initialised=0;
 
-void event_poll()
+typedef struct d_event_keycommand
 {
+        event_type      type;   // EVENT_KEY_COMMAND/RELEASE
+        int                     keycode;
+} d_event_keycommand;
+
+void key_setkeyd_pressed(int ndx,unsigned char val);
+
+void event_poll() {
+  IPCEvent_t ev;
+  d_event_keycommand descentevent;
+  window *wind = window_get_front();
+  int bIdle = 1;
+
+  while(wind == window_get_front() && IPCEvent_Poll(&ev) == 0 ) {
+    if( ev.key.state == 1 )
+      descentevent.type = EVENT_KEY_COMMAND;
+    else
+      descentevent.type = EVENT_KEY_RELEASE;
+    
+    if(      ev.key.key == eEventKey_L1 ) descentevent.keycode = 1;  // ESC
+    else if( ev.key.key == eEventKey_R1 ) descentevent.keycode = 28; // ENTER
+
+    key_setkeyd_pressed(descentevent.keycode,ev.key.state);
+
+    event_send((d_event*)&descentevent);
+
+    con_printf(CON_NORMAL,"Sending event.. type=%i, keycode=%i\n",descentevent.type,descentevent.keycode);
+    bIdle = 0;
+  }
+   
+  if( bIdle ) {
+    d_event ievent;
+
+    //con_printf(CON_NORMAL,"No events...\n");
+                
+    ievent.type = EVENT_IDLE;
+    event_send(&ievent);
+  }
+
 }
 
-void event_flush()
-{
+void event_flush() {
+  IPCEvent_t ev;
+
+  while(IPCEvent_Poll(&ev) == 0 ) { }
 }
 
 int event_init()

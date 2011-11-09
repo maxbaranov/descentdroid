@@ -138,7 +138,7 @@ int show_title_screen( char * filename, int allow_keys, int from_hog_only )
 
 	MALLOC(ts, title_screen, 1);
 	if (!ts)
-		return 0;
+		return -1;
 
 	ts->allow_keys = allow_keys;
 
@@ -165,7 +165,7 @@ int show_title_screen( char * filename, int allow_keys, int from_hog_only )
 	{
 		gr_free_bitmap_data (&ts->title_bm);
 		d_free(ts);
-		return 0;
+		return -1;
 	}
 
 	while (window_exists(wind))
@@ -174,24 +174,39 @@ int show_title_screen( char * filename, int allow_keys, int from_hog_only )
 	return 0;
 }
 
-void show_titles(void)
+int show_titles(void)
 {
-	char    publisher[PATH_MAX];
+  char    publisher[PATH_MAX];
+  static int inited = 0;
+  static int state = 0;
 
-	songs_play_song( SONG_TITLE, 1 );
+  if( !inited ) {
+    songs_play_song( SONG_TITLE, 1 );
+    inited = 1;
+  }
 
-	if (GameArg.SysNoTitles)
-		return;
+  if (GameArg.SysNoTitles)
+    return;
 
-	strcpy(publisher, "macplay.pcx");	// Mac Shareware
-	if (!PHYSFSX_exists(publisher,1))
-		strcpy(publisher, "mplaycd.pcx");	// Mac Registered
-	if (!PHYSFSX_exists(publisher,1))
-		strcpy(publisher, "iplogo1.pcx");	// PC. Only down here because it's lowres ;-)
+  strcpy(publisher, "macplay.pcx");	// Mac Shareware
+  if (!PHYSFSX_exists(publisher,1))
+    strcpy(publisher, "mplaycd.pcx");	// Mac Registered
+  if (!PHYSFSX_exists(publisher,1))
+    strcpy(publisher, "iplogo1.pcx");	// PC. Only down here because it's lowres ;-)
 
-	show_title_screen( publisher, 1, 1 );
-	show_title_screen( (((SWIDTH>=640&&SHEIGHT>=480) && PHYSFSX_exists("logoh.pcx",1))?"logoh.pcx":"logo.pcx"), 1, 1 );
-	show_title_screen( (((SWIDTH>=640&&SHEIGHT>=480) && PHYSFSX_exists("descenth.pcx",1))?"descenth.pcx":"descent.pcx"), 1, 1 );
+  return 1;
+
+  if(state == 0) {
+    if( show_title_screen( publisher, 1, 1 ) == 0 )
+      return 0;
+    else
+      state++;
+  }
+
+  //show_title_screen( (((SWIDTH>=640&&SHEIGHT>=480) && PHYSFSX_exists("logoh.pcx",1))?"logoh.pcx":"logo.pcx"), 1, 1 );
+  //show_title_screen( (((SWIDTH>=640&&SHEIGHT>=480) && PHYSFSX_exists("descenth.pcx",1))?"descenth.pcx":"descent.pcx"), 1, 1 );
+
+  return 1; // No need to run us again
 }
 
 void show_order_form()

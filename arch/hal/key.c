@@ -23,8 +23,8 @@ static unsigned char Installed = 0;
 
 //-------- Variable accessed by outside functions ---------
 int			keyd_repeat = 0; // 1 = use repeats, 0 no repeats
-volatile unsigned char 	keyd_last_pressed;
-volatile unsigned char 	keyd_last_released;
+//volatile unsigned char 	keyd_last_pressed;
+//volatile unsigned char 	keyd_last_released;
 volatile unsigned char	keyd_pressed[256];
 fix64			keyd_time_when_last_pressed;
 unsigned char		unicode_frame_buffer[KEY_BUFFER_SIZE] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
@@ -403,7 +403,7 @@ void key_handler(SDL_KeyboardEvent *kevent)
 
 		// now update the key props
 		if (key_state) {
-			keyd_last_pressed = keycode;
+		  //keyd_last_pressed = keycode;
 			keyd_pressed[keycode] = key_data.state[keycode] = 1;
 		} else {
 			keyd_pressed[keycode] = key_data.state[keycode] = 0;
@@ -433,6 +433,7 @@ void key_handler(SDL_KeyboardEvent *kevent)
 				(keycode & KEY_SHIFTED)	? "SHIFT" : "",
 				key_properties[keycode & 0xff].key_text
 				);
+		con_printf(CON_NORMAL,"Sending event.. type=%i, keycode=%i\n",event.type,event.keycode);
 		event_send((d_event *)&event);
 	}
 }
