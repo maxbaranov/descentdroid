@@ -1,6 +1,7 @@
 // Holds the main init and de-init functions for arch-related program parts
 
 #include <SDL/SDL.h>
+
 #include "songs.h"
 #include "key.h"
 #include "digi.h"
@@ -38,11 +39,11 @@ void arch_init(void)
 	int t;
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
-		Error("SDL library initialisation failed: %s.",SDL_GetError());
+                Error("SDL library initialisation failed: %s.",SDL_GetError());
 
 	key_init();
 
-	digi_select_system( GameArg.SndDisableSdlMixer ? SDLAUDIO_SYSTEM : SDLMIXER_SYSTEM );
+	digi_select_system( SDLAUDIO_SYSTEM );
 
 	if (!GameArg.SndNoSound)
 		digi_init();

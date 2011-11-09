@@ -3,8 +3,8 @@
  * SDL library timer functions
  *
  */
-
-#include <SDL/SDL.h>
+#include <unistd.h>
+#include <sys/time.h>
 
 #include "maths.h"
 #include "timer.h"
@@ -12,31 +12,35 @@
 
 static fix64 F64_RunTime = 0;
 
+unsigned long long starttime = 0;
+
+unsigned long long OSAL_GetTimeMS(void)
+{
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        return (unsigned int)((tv.tv_sec % 0x3fffff)*1000 + tv.tv_usec/1000);
+}
+
 void timer_update(void)
 {
-	static ubyte init = 1;
-	static fix64 last_tv = 0;
-	fix64 cur_tv = SDL_GetTicks()*F1_0/1000;
+  unsigned long long currtime;
 
-	if (init)
-	{
-		last_tv = cur_tv;
-		init = 0;
-	}
+  if( starttime == 0 )
+    starttime = OSAL_GetTimeMS();
 
-	if (last_tv < cur_tv) // in case SDL_GetTicks wraps, don't update and have a little hickup
-		F64_RunTime += (cur_tv - last_tv); // increment! this value will overflow long after we are all dead... so why bother checking?
-	last_tv = cur_tv;
+  currtime = OSAL_GetTimeMS();
+
+  F64_RunTime = i2f(currtime - starttime) / 1000;
 }
 
 fix64 timer_query(void)
 {
-	return (F64_RunTime);
+  return (F64_RunTime);
 }
 
 void timer_delay(fix seconds)
 {
-	SDL_Delay(f2i(fixmul(seconds, i2f(1000))));
+  usleep( f2i(fixmul(seconds, i2f(1000))) * 1000 );
 }
 
 // Replacement for timer_delay which considers calc time the program needs between frames (not reentrant)
@@ -47,13 +51,13 @@ void timer_delay2(int fps)
 
 	while (FrameLoop < 1000/(GameCfg.VSync?MAXIMUM_FPS:fps))
 	{
-		u_int32_t tv_now = SDL_GetTicks();
+	  u_int32_t tv_now = OSAL_GetTimeMS();
 		if (FrameStart > tv_now)
 			FrameStart = tv_now;
 		if (!GameCfg.VSync)
-			SDL_Delay(1);
+		  usleep(100);
 		FrameLoop=tv_now-FrameStart;
 	}
 
-	FrameStart=SDL_GetTicks();
+	FrameStart=OSAL_GetTimeMS();
 }

@@ -4,6 +4,7 @@
 #include <dlfcn.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <android/log.h>
 
 #include <EGL/egl.h>

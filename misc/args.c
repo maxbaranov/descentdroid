@@ -27,6 +27,9 @@ COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
 #include "args.h"
 #include "game.h"
 #include "gauges.h"
+#ifndef ANDROID
+#include <SDL/SDL.h>
+#endif
 #ifdef USE_UDP
 #include "net_udp.h"
 #endif

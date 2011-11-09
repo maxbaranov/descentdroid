@@ -125,7 +125,8 @@ OBJS += 2d/2dsline.o \
   arch/hal/mouse.o \
   arch/hal/rbaudio.o \
   arch/hal/timer.o \
-  arch/hal/window.o
+  arch/hal/window.o \
+  arch/hal/main.o
 
 all: descentdroid
 

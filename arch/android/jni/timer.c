@@ -3,7 +3,7 @@
  * SDL library timer functions
  *
  */
-
+#include <unistd.h>
 #include <sys/time.h>
 
 #include "maths.h"
@@ -30,7 +30,7 @@ void timer_update(void)
 
   currtime = OSAL_GetTimeMS();
 
-  F64_RunTime = currtime - starttime;
+  F64_RunTime = i2f(currtime - starttime) / 1000;
 }
 
 fix64 timer_query(void)

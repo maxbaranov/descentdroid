@@ -280,7 +280,7 @@ jmp_buf LeaveEvents;
 int SecondMain(int argc, char *argv[])
 {
 	mem_init();
-#if defined(__LINUX__) || defined(ANDROID)
+#if defined(__linux__) || defined(ANDROID)
 	error_init(NULL, NULL);
 #else
 	error_init(msgbox_error, NULL);
