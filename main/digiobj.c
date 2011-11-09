@@ -731,37 +731,6 @@ void digi_stop_digi_sounds()
 	SoundQ_init();
 }
 
-#ifndef NDEBUG
-int verify_sound_channel_free( int channel )
-{
-	int i;
-	for (i=0; i<MAX_SOUND_OBJECTS; i++ )	{
-		if ( SoundObjects[i].flags & SOF_USED )	{
-			if ( SoundObjects[i].channel == channel )	{
-				Int3();	// Get John!
-			}
-		}
-	}
-	return 0;
-}
-
-void digi_sound_debug()
-{
-	int i;
-	int n_active_sound_objs=0;
-	int n_sound_objs=0;
-
-	for (i=0; i<MAX_SOUND_OBJECTS; i++ )	{
-		if ( SoundObjects[i].flags & SOF_USED ) 	{
-			n_sound_objs++;
-			if ( SoundObjects[i].channel > -1 )
-				n_active_sound_objs++;
-		}
-	}
-	digi_debug();
-}
-#endif
-
 typedef struct sound_q {
 	fix64 time_added;
 	int soundnum;

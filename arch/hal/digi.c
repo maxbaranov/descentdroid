@@ -20,15 +20,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <digi.h>
-#include <digi_audio.h>
-
-#ifdef USE_SDLMIXER
-#include <digi_mixer.h>
-#endif
-#ifdef _WIN32
-#include "hmp.h"
-#endif
+#include "digi.h"
+#include "digi_null.h"
 
 /* Sound system function pointers */
 
@@ -50,46 +43,26 @@ void (*fptr_set_digi_volume)(int) = NULL;
 
 void digi_select_system(int n) {
 	switch (n) {
-#ifdef USE_SDLMIXER
-	case SDLMIXER_SYSTEM:
-	con_printf(CON_NORMAL,"Using SDL_mixer library\n");
-	fptr_init = digi_mixer_init;
-	fptr_close = digi_mixer_close;
-	fptr_reset = digi_mixer_reset;
-	fptr_set_channel_volume = digi_mixer_set_channel_volume;
-	fptr_set_channel_pan = digi_mixer_set_channel_pan;
-	fptr_start_sound = digi_mixer_start_sound;
-	fptr_stop_sound = digi_mixer_stop_sound;
-	fptr_end_sound = digi_mixer_end_sound;
-	fptr_is_sound_playing = digi_mixer_is_sound_playing;
-	fptr_is_channel_playing = digi_mixer_is_channel_playing;
-	fptr_stop_all_channels = digi_mixer_stop_all_channels;
-	fptr_set_digi_volume = digi_mixer_set_digi_volume;
-	break;
-#endif
 	case SDLAUDIO_SYSTEM:
 	default:
-	con_printf(CON_NORMAL,"Using plain old SDL audio\n");
-        fptr_init = digi_audio_init;
-        fptr_close = digi_audio_close;
-        fptr_reset = digi_audio_reset;
-        fptr_set_channel_volume = digi_audio_set_channel_volume;
-        fptr_set_channel_pan = digi_audio_set_channel_pan;
-        fptr_start_sound = digi_audio_start_sound;
-        fptr_stop_sound = digi_audio_stop_sound;
-        fptr_end_sound = digi_audio_end_sound;
-        fptr_is_sound_playing = digi_audio_is_sound_playing;
-        fptr_is_channel_playing = digi_audio_is_channel_playing;
-        fptr_stop_all_channels = digi_audio_stop_all_channels;
-	fptr_set_digi_volume = digi_audio_set_digi_volume;
+	con_printf(CON_NORMAL,"Using NULL audio\n");
+        fptr_init = digi_null_init;
+        fptr_close = digi_null_close;
+        fptr_reset = digi_null_reset;
+        fptr_set_channel_volume = digi_null_set_channel_volume;
+        fptr_set_channel_pan = digi_null_set_channel_pan;
+        fptr_start_sound = digi_null_start_sound;
+        fptr_stop_sound = digi_null_stop_sound;
+        fptr_end_sound = digi_null_end_sound;
+        fptr_is_sound_playing = digi_null_is_sound_playing;
+        fptr_is_channel_playing = digi_null_is_channel_playing;
+        fptr_stop_all_channels = digi_null_stop_all_channels;
+	fptr_set_digi_volume = digi_null_set_digi_volume;
  	break;
 	}
 }
 
 /* Common digi functions */
-#ifndef NDEBUG
-static int digi_initialised = 0;
-#endif
 extern int digi_max_channels;
 int digi_sample_rate = SAMPLE_RATE_11K;
 int digi_volume = SOUND_MAX_VOLUME;
@@ -124,79 +97,4 @@ int  digi_is_channel_playing(int channel) { return fptr_is_channel_playing(chann
 void digi_stop_all_channels() { fptr_stop_all_channels(); }
 void digi_set_digi_volume(int dvolume) { fptr_set_digi_volume(dvolume); }
 
-#ifndef NDEBUG
-void digi_debug()
-{
-	int i;
-	int n_voices = 0;
 
-	if (!digi_initialised) return;
-
-	for (i = 0; i < digi_max_channels; i++)
-	{
-		if (digi_is_channel_playing(i))
-			n_voices++;
-        }
-}
-#endif
-
-#ifdef _WIN32
-// Windows native-MIDI stuff.
-int digi_win32_midi_song_playing=0;
-static hmp_file *cur_hmp=NULL;
-static int firstplay = 1;
-
-void digi_win32_set_midi_volume( int mvolume )
-{
-	hmp_setvolume(cur_hmp, mvolume*MIDI_VOLUME_SCALE/8);
-}
-
-int digi_win32_play_midi_song( char * filename, int loop )
-{
-	if (firstplay)
-	{
-		hmp_reset();
-		firstplay = 0;
-	}
-	digi_win32_stop_midi_song();
-
-	if (filename == NULL)
-		return 0;
-
-	if ((cur_hmp = hmp_open(filename)))
-	{
-		/* 
-		 * FIXME: to be implemented as soon as we have some kind or checksum function - replacement for ugly hack in hmp.c for descent.hmp
-		 * if (***filesize check*** && ***CRC32 or MD5 check***)
-		 *	(((*cur_hmp).trks)[1]).data[6] = 0x6C;
-		 */
-		if (hmp_play(cur_hmp,loop) != 0)
-			return 0;	// error
-		digi_win32_midi_song_playing = 1;
-		digi_win32_set_midi_volume(GameCfg.MusicVolume);
-		return 1;
-	}
-
-	return 0;
-}
-
-void digi_win32_pause_midi_song()
-{
-	hmp_pause(cur_hmp);
-}
-
-void digi_win32_resume_midi_song()
-{
-	hmp_resume(cur_hmp);
-}
-
-void digi_win32_stop_midi_song()
-{
-	if (!digi_win32_midi_song_playing)
-		return;
-	hmp_close(cur_hmp);
-	cur_hmp = NULL;
-	digi_win32_midi_song_playing = 0;
-	hmp_reset();
-}
-#endif

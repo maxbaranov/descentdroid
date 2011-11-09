@@ -9,21 +9,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef _MSC_VER
-#include <windows.h>
-#endif
-
-#if !defined(_MSC_VER) && !defined(macintosh)
 #include <unistd.h>
-#endif
-#if !defined(macintosh)
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#endif
-
 #include <errno.h>
 #include <SDL/SDL.h>
+
 #include "hudmsg.h"
 #include "game.h"
 #include "text.h"
@@ -47,144 +39,29 @@
 #include "vers_id.h"
 #include "game.h"
 
-#if defined(__APPLE__) && defined(__MACH__)
-#include <OpenGL/glu.h>
-#else
-#ifdef OGLES
-#include <GLES/egl.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <SDL/SDL_syswm.h>
-#else
 #include <GL/glu.h>
-#endif
-#endif
 
-#ifdef OGLES
-int sdl_video_flags = 0;
-#else
-int sdl_video_flags = SDL_OPENGL;
-#endif
 int gr_installed = 0;
 int gl_initialized=0;
 int linedotscale=1; // scalar of glLinewidth and glPointSize - only calculated once when resolution changes
 
-#ifdef OGLES
-EGLDisplay eglDisplay;
-EGLConfig eglConfig;
-EGLSurface eglSurface;
-EGLContext eglContext;
-
-bool TestEGLError(char* pszLocation)
-{
-	/*
-	 * eglGetError returns the last error that has happened using egl,
-	 * not the status of the last called function. The user has to
-	 * check after every single egl call or at least once every frame.
-	*/
-	EGLint iErr = eglGetError();
-	if (iErr != EGL_SUCCESS)
-	{
-		con_printf(CON_URGENT, "%s failed (%d).\n", pszLocation, iErr);
-		return 0;
-	}
-	
-	return 1;
-}
-#endif
-
 void ogl_swap_buffers_internal(void)
 {
-#ifdef OGLES
-	eglSwapBuffers(eglDisplay, eglSurface);
-#else
 	SDL_GL_SwapBuffers();
-#endif
 }
 
 int ogl_init_window(int x, int y)
 {
-#ifdef OGLES
-	SDL_SysWMinfo info;
-	Window    x11Window = 0;
-	Display*  x11Display = 0;
-	EGLint    ver_maj, ver_min;
-	EGLint configAttribs[] =
-	{
-		EGL_RED_SIZE, 5,
-		EGL_GREEN_SIZE, 6,
-		EGL_BLUE_SIZE, 5,
-		EGL_DEPTH_SIZE, 16,
-		EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-		EGL_RENDERABLE_TYPE, EGL_OPENGL_ES_BIT,
-		EGL_NONE
-	};
-	int iConfigs;
-#endif
 
 	if (gl_initialized)
 		ogl_smash_texture_list_internal();//if we are or were fullscreen, changing vid mode will invalidate current textures
 
 	SDL_WM_SetCaption(DESCENT_VERSION, "Descent");
-	SDL_WM_SetIcon( SDL_LoadBMP( "d1x-rebirth.bmp" ), NULL );
 
-	if (!SDL_SetVideoMode(x, y, GameArg.DbgBpp, sdl_video_flags))
+	if (!SDL_SetVideoMode(x, y, GameArg.DbgBpp, SDL_OPENGL))
 	{
 		Error("Could not set %dx%dx%d opengl video mode: %s\n", x, y, GameArg.DbgBpp, SDL_GetError());
 	}
-
-#ifdef OGLES
-	if( eglSurface || eglContext || eglDisplay )
-	{
-		eglMakeCurrent(eglDisplay, NULL, NULL, EGL_NO_CONTEXT);
-		eglDestroyContext(eglDisplay, eglContext);
-		eglDestroySurface(eglDisplay, eglSurface);
-	}
-
-	SDL_VERSION(&info.version);
-	
-	if (SDL_GetWMInfo(&info) > 0) {
-		if (info.subsystem == SDL_SYSWM_X11) {
-			x11Display = info.info.x11.display;
-			x11Window = info.info.x11.window;
-			printf ("Display: %p, Window: %i ===\n", x11Display, x11Window);
-		}
-	}
-	
-	eglDisplay = eglGetDisplay((NativeDisplayType)x11Display);
-	if (!eglInitialize(eglDisplay, &ver_maj, &ver_min)) {
-		con_printf(CON_URGENT, "EGL: Error initializing EGL\n");
-	} else {
-		con_printf(CON_URGENT, "EGL: Initialized, version: major %i minor %i\n", ver_maj, ver_min);
-	}
-	
-	if (!eglChooseConfig(eglDisplay, configAttribs, &eglConfig, 1, &iConfigs) || (iConfigs != 1)) {
-		con_printf(CON_URGENT, "EGL: Error choosing config\n");
-	} else {
-		con_printf(CON_URGENT, "EGL: Choosed config\n", ver_maj, ver_min);
-	}
-	
-	eglSurface = eglCreateWindowSurface(eglDisplay, eglConfig, (NativeWindowType)x11Window, NULL);
-	if (!TestEGLError("eglCreateWindowSurface")) {
-		con_printf(CON_URGENT, "EGL: Error creating window surface\n");
-	} else {
-		con_printf(CON_URGENT, "EGL: Created window surface\n");
-	}
-	
-	eglContext = eglCreateContext(eglDisplay, eglConfig, NULL, NULL);
-	if (!TestEGLError("eglCreateContext")) {
-		con_printf(CON_URGENT, "EGL: Error creating context\n");
-	} else {
-		con_printf(CON_URGENT, "EGL: Created context\n");
-	}
-	
-	eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext);
-	if (!TestEGLError("eglMakeCurrent")) {
-		con_printf(CON_URGENT, "EGL: Error making current\n");
-	} else {
-		con_printf(CON_URGENT, "EGL: Created current\n");
-	}
-#endif
 
 	linedotscale = ((x/640<y/480?x/640:y/480)<1?1:(x/640<y/480?x/640:y/480));
 
@@ -194,46 +71,12 @@ int ogl_init_window(int x, int y)
 
 int gr_check_fullscreen(void)
 {
-	return (sdl_video_flags & SDL_FULLSCREEN)?1:0;
+  return 0;
 }
 
 int gr_toggle_fullscreen(void)
 {
-	if (sdl_video_flags & SDL_FULLSCREEN)
-		sdl_video_flags &= ~SDL_FULLSCREEN;
-	else
-		sdl_video_flags |= SDL_FULLSCREEN;
-
-	if (gl_initialized)
-	{
-		if (!SDL_VideoModeOK(SM_W(Game_screen_mode), SM_H(Game_screen_mode), GameArg.DbgBpp, sdl_video_flags))
-		{
-			con_printf(CON_URGENT,"Cannot set %ix%i. Fallback to 640x480\n",SM_W(Game_screen_mode), SM_H(Game_screen_mode));
-			Game_screen_mode=SM(640,480);
-		}
-		if (!SDL_SetVideoMode(SM_W(Game_screen_mode), SM_H(Game_screen_mode), GameArg.DbgBpp, sdl_video_flags))
-		{
-			Error("Could not set %dx%dx%d opengl video mode: %s\n", SM_W(Game_screen_mode), SM_H(Game_screen_mode), GameArg.DbgBpp, SDL_GetError());
-		}
-	}
-
-	if (gl_initialized) // update viewing values for menus
-	{
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-#ifdef OGLES
-		glOrthof(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
-#else
- 		glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
-#endif
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();//clear matrix
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		ogl_smash_texture_list_internal();//if we are or were fullscreen, changing vid mode will invalidate current textures
-	}
-	GameCfg.WindowMode = (sdl_video_flags & SDL_FULLSCREEN)?0:1;
-	return (sdl_video_flags & SDL_FULLSCREEN)?1:0;
+  return 0;
 }
 
 extern void ogl_init_pixel_buffers(int w, int h);
@@ -247,11 +90,7 @@ void ogl_init_state(void)
 	/* initialize viewing values */
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-#ifdef OGLES
-	glOrthof(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
-#else
  	glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
-#endif
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();//clear matrix
 	glEnable(GL_BLEND);
@@ -264,60 +103,30 @@ void ogl_init_state(void)
 // Set the buffer to draw to. 0 is front, 1 is back
 void gr_set_draw_buffer(int buf)
 {
-#ifndef OGLES
-	glDrawBuffer((buf == 0) ? GL_FRONT : GL_BACK);
-#endif
+  if(buf == 0)
+    glDrawBuffer(GL_FRONT);
+  else
+    glDrawBuffer(GL_BACK);
 }
 
 const char *gl_vendor, *gl_renderer, *gl_version, *gl_extensions;
 
 void ogl_get_verinfo(void)
 {
-#ifndef OGLES
-	gl_vendor = (const char *) glGetString (GL_VENDOR);
-	gl_renderer = (const char *) glGetString (GL_RENDERER);
-	gl_version = (const char *) glGetString (GL_VERSION);
-	gl_extensions = (const char *) glGetString (GL_EXTENSIONS);
+  gl_vendor = (const char *) glGetString (GL_VENDOR);
+  gl_renderer = (const char *) glGetString (GL_RENDERER);
+  gl_version = (const char *) glGetString (GL_VERSION);
+  gl_extensions = (const char *) glGetString (GL_EXTENSIONS);
 
-	con_printf(CON_VERBOSE, "OpenGL: vendor: %s\nOpenGL: renderer: %s\nOpenGL: version: %s\n",gl_vendor,gl_renderer,gl_version);
+  con_printf(CON_VERBOSE, "OpenGL: vendor: %s\nOpenGL: renderer: %s\nOpenGL: version: %s\n",gl_vendor,gl_renderer,gl_version);
 
-#ifdef _WIN32
-	dglMultiTexCoord2fARB = (glMultiTexCoord2fARB_fp)wglGetProcAddress("glMultiTexCoord2fARB");
-	dglActiveTextureARB = (glActiveTextureARB_fp)wglGetProcAddress("glActiveTextureARB");
-	dglMultiTexCoord2fSGIS = (glMultiTexCoord2fSGIS_fp)wglGetProcAddress("glMultiTexCoord2fSGIS");
-	dglSelectTextureSGIS = (glSelectTextureSGIS_fp)wglGetProcAddress("glSelectTextureSGIS");
-#endif
-
-	//add driver specific hacks here.  whee.
-	if ((stricmp(gl_renderer,"Mesa NVIDIA RIVA 1.0\n")==0 || stricmp(gl_renderer,"Mesa NVIDIA RIVA 1.2\n")==0) && stricmp(gl_version,"1.2 Mesa 3.0")==0)
-	{
-		GameArg.DbgGlIntensity4Ok=0;//ignores alpha, always black background instead of transparent.
-		GameArg.DbgGlReadPixelsOk=0;//either just returns all black, or kills the X server entirely
-		GameArg.DbgGlGetTexLevelParamOk=0;//returns random data..
-	}
-	if (stricmp(gl_vendor,"Matrox Graphics Inc.")==0)
-	{
-		//displays garbage. reported by
-		//  redomen@crcwnet.com (render="Matrox G400" version="1.1.3 5.52.015")
-		//  orulz (Matrox G200)
-		GameArg.DbgGlIntensity4Ok=0;
-	}
-#ifdef macintosh
-	if (stricmp(gl_renderer,"3dfx Voodoo 3")==0) // strangely, includes Voodoo 2
-		GameArg.DbgGlGetTexLevelParamOk=0; // Always returns 0
-#endif
-
-#ifndef NDEBUG
-	con_printf(CON_VERBOSE,"gl_intensity4:%i gl_luminance4_alpha4:%i gl_rgba2:%i gl_readpixels:%i gl_gettexlevelparam:%i\n",GameArg.DbgGlIntensity4Ok,GameArg.DbgGlLuminance4Alpha4Ok,GameArg.DbgGlRGBA2Ok,GameArg.DbgGlReadPixelsOk,GameArg.DbgGlGetTexLevelParamOk);
-#endif
-	if (!stricmp(gl_extensions,"GL_EXT_texture_filter_anisotropic")==0)
-	{
-		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &ogl_maxanisotropy);
-		con_printf(CON_VERBOSE,"ogl_maxanisotropy:%f\n",ogl_maxanisotropy);
-	}
-	else if (GameCfg.TexFilt >= 3)
-		GameCfg.TexFilt = 2;
-#endif
+  if (!stricmp(gl_extensions,"GL_EXT_texture_filter_anisotropic")==0)
+    {
+      glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &ogl_maxanisotropy);
+      con_printf(CON_VERBOSE,"ogl_maxanisotropy:%f\n",ogl_maxanisotropy);
+    }
+  else if (GameCfg.TexFilt >= 3)
+    GameCfg.TexFilt = 2;
 }
 
 // returns possible (fullscreen) resolutions if any.
@@ -364,7 +173,7 @@ int gr_check_mode(u_int32_t mode)
 	w=SM_W(mode);
 	h=SM_H(mode);
 
-	return SDL_VideoModeOK(w, h, GameArg.DbgBpp, sdl_video_flags);
+	return SDL_VideoModeOK(w, h, GameArg.DbgBpp, SDL_OPENGL);
 }
 
 int gr_set_mode(u_int32_t mode)
@@ -425,33 +234,6 @@ int ogl_atotexfilti(char *a,int min)
 	Error("unknown/invalid texture filter %s\n",a);
 }
 
-#ifdef _WIN32
-char *OglLibPath="opengl32.dll";
-
-int ogl_rt_loaded=0;
-int ogl_init_load_library(void)
-{
-	int retcode=0;
-	if (!ogl_rt_loaded)
-	{
-		retcode = OpenGL_LoadLibrary(true);
-		if(retcode)
-		{
-			if(!glEnd)
-			{
-				Error("Opengl: Functions not imported\n");
-			}
-		}
-		else
-		{
-			Error("Opengl: error loading %s\n", OglLibPath);
-		}
-		ogl_rt_loaded=1;
-	}
-	return retcode;
-}
-#endif
-
 void gr_set_attributes(void)
 {
 #ifndef OGLES
@@ -484,16 +266,6 @@ int gr_init(int mode)
 	// Only do this function once!
 	if (gr_installed==1)
 		return -1;
-
-#ifdef _WIN32
-	ogl_init_load_library();
-#endif
-
-	if (!GameCfg.WindowMode && !GameArg.SysWindow)
-		sdl_video_flags|=SDL_FULLSCREEN;
-
-	if (GameArg.SysNoBorders)
-		sdl_video_flags|=SDL_NOFRAME;
 
 	gr_set_attributes();
 
@@ -539,10 +311,6 @@ void gr_close()
 		d_free(grd_curscreen);
 	}
 	ogl_close_pixel_buffers();
-#ifdef _WIN32
-	if (ogl_rt_loaded)
-		OpenGL_LoadLibrary(false);
-#endif
 }
 
 extern int r_upixelc;

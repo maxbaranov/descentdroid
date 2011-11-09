@@ -5,21 +5,8 @@
  */
 
 //#include <stdio.h>
-#ifdef _WIN32
-#include <windows.h>
-#include <stddef.h>
-#endif
-#if defined(__APPLE__) && defined(__MACH__)
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
-#else
-#ifdef OGLES
-#include <GLES/gl.h>
-#else
 #include <GL/gl.h>
 #include <GL/glu.h>
-#endif
-#endif
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
@@ -33,9 +20,6 @@
 #include "rle.h"
 #include "console.h"
 #include "u_mem.h"
-#ifdef HAVE_LIBPNG
-#include "pngfile.h"
-#endif
 
 #include "segment.h"
 #include "textures.h"
@@ -53,11 +37,7 @@
 #include "playsave.h"
 
 //change to 1 for lots of spew.
-#if 0
-#define glmprintf(0,a) con_printf(CON_DEBUG, a)
-#else
 #define glmprintf(a)
-#endif
 
 #ifndef M_PI
 #define M_PI 3.14159
@@ -76,13 +56,9 @@ int GL_texclamp_enabled=-1;
 GLfloat ogl_maxanisotropy = 0;
 
 int r_texcount = 0, r_cachedtexcount = 0;
-#ifdef OGLES
-int ogl_rgba_internalformat = GL_RGBA;
-int ogl_rgb_internalformat = GL_RGB;
-#else
 int ogl_rgba_internalformat = GL_RGBA8;
 int ogl_rgb_internalformat = GL_RGB8;
-#endif
+
 GLfloat *sphere_va = NULL, *circle_va = NULL, *disk_va = NULL;
 GLfloat *secondary_lva[3]={NULL, NULL, NULL};
 int r_polyc,r_tpolyc,r_bitmapc,r_ubitbltc,r_upixelc;
@@ -106,27 +82,6 @@ int ogl_loadtexture(unsigned char *data, int dxo, int dyo, ogl_texture *tex, int
 void ogl_freetexture(ogl_texture *gltexture);
 void ogl_do_palfx(void);
 
-#ifdef OGLES
-// Replacement for gluPerspective
-void perspective(double fovy, double aspect, double zNear, double zFar)
-{
-	double xmin, xmax, ymin, ymax;
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-	ymax = zNear * tan(fovy * M_PI / 360.0);
-	ymin = -ymax;
-	xmin = ymin * aspect;
-	xmax = ymax * aspect;
-
-	glFrustumf(xmin, xmax, ymin, ymax, zNear, zFar);
-	glMatrixMode(GL_MODELVIEW);
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	
-	glDepthMask(GL_TRUE);
-}
-#endif
-
 void ogl_init_texture_stats(ogl_texture* t){
 	t->prio=0.3;//default prio
 	t->numrend=0;
@@ -135,7 +90,7 @@ void ogl_init_texture_stats(ogl_texture* t){
 void ogl_init_texture(ogl_texture* t, int w, int h, int flags)
 {
 	t->handle = 0;
-#ifndef OGLES
+
 	if (flags & OGL_FLAG_NOCOLOR)
 	{
 		// use GL_INTENSITY instead of GL_RGB
@@ -171,7 +126,6 @@ void ogl_init_texture(ogl_texture* t, int w, int h, int flags)
 	}
 	else
 	{
-#endif
 		if (flags & OGL_FLAG_ALPHA)
 		{
 			t->internalformat = ogl_rgba_internalformat;
@@ -182,9 +136,7 @@ void ogl_init_texture(ogl_texture* t, int w, int h, int flags)
 			t->internalformat = ogl_rgb_internalformat;
 			t->format = GL_RGB;
 		}
-#ifndef OGLES
 	}
-#endif
 	t->wrapstate = -1;
 	t->lw = t->w = w;
 	t->h = h;
@@ -281,26 +233,20 @@ void ogl_texture_stats(void)
 				usedrgba++;
 			else if (t->format == GL_RGB)
 				usedrgb++;
-#ifndef OGLES
 			else if (t->format == GL_COLOR_INDEX)
 				usedidx++;
-#endif
 			else
 				usedother++;
 		}
 	}
 
 	res = SWIDTH * SHEIGHT;
-#ifndef OGLES
 	glGetIntegerv(GL_INDEX_BITS, &idx);
-#endif
 	glGetIntegerv(GL_RED_BITS, &r);
 	glGetIntegerv(GL_GREEN_BITS, &g);
 	glGetIntegerv(GL_BLUE_BITS, &b);
 	glGetIntegerv(GL_ALPHA_BITS, &a);
-#ifndef OGLES
 	glGetIntegerv(GL_DOUBLEBUFFER, &dbl);
-#endif
 	dbl += 1;
 	glGetIntegerv(GL_DEPTH_BITS, &depth);
 	gr_set_current_canvas(NULL);
@@ -1199,11 +1145,7 @@ void ogl_start_frame(void){
 	glShadeModel(GL_SMOOTH);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();//clear matrix
-#ifdef OGLES
-	perspective(90.0,1.0,0.1,5000.0);   
-#else
 	gluPerspective(90.0,1.0,0.1,5000.0);
-#endif
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();//clear matrix
 }
@@ -1212,11 +1154,7 @@ void ogl_end_frame(void){
 	OGL_VIEWPORT(0,0,grd_curscreen->sc_w,grd_curscreen->sc_h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();//clear matrix
-#ifdef OGLES
-	glOrthof(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
-#else
 	glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
-#endif
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();//clear matrix
 	glDisable(GL_CULL_FACE);
@@ -1235,7 +1173,6 @@ void gr_flip(void)
 
 int tex_format_supported(int iformat,int format)
 {
-#ifndef OGLES
 	switch (iformat){
 		case GL_INTENSITY4:
 			if (!GameArg.DbgGlIntensity4Ok) return 0; break;
@@ -1253,7 +1190,7 @@ int tex_format_supported(int iformat,int format)
 				&internalFormat);
 		return (internalFormat==iformat);
 	}else
-#endif
+
 		return 1;
 }
 
@@ -1346,11 +1283,9 @@ void ogl_filltexbuf(unsigned char *data, GLubyte *texp, int truewidth, int width
 						(*(texp++)) = 255;
 						(*(texp++)) = 0; // transparent pixel
 						break;
-#ifndef OGLES
 					case GL_COLOR_INDEX:
 						(*(texp++)) = c;
 						break;
-#endif
 					default:
 						Error("ogl_filltexbuf unhandled super-transparent texformat\n");
 						break;
@@ -1378,11 +1313,9 @@ void ogl_filltexbuf(unsigned char *data, GLubyte *texp, int truewidth, int width
 						(*(texp++))=0;
 						(*(texp++))=0;//transparent pixel
 						break;
-#ifndef OGLES
 					case GL_COLOR_INDEX:
 						(*(texp++)) = c;
 						break;
-#endif
 					default:
 						Error("ogl_filltexbuf unknown texformat\n");
 						break;
@@ -1410,11 +1343,9 @@ void ogl_filltexbuf(unsigned char *data, GLubyte *texp, int truewidth, int width
 						(*(texp++))=ogl_pal[c*3+2]*4;
 						(*(texp++))=255;//not transparent
 						break;
-#ifndef OGLES
 					case GL_COLOR_INDEX:
 						(*(texp++)) = c;
 						break;
-#endif
 					default:
 						Error("ogl_filltexbuf unknown texformat\n");
 						break;
@@ -1428,13 +1359,6 @@ int tex_format_verify(ogl_texture *tex){
 	while (!tex_format_supported(tex->internalformat,tex->format)){
 		glmprintf((0,"tex format %x not supported",tex->internalformat));
 		switch (tex->internalformat){
-#ifdef OGLES
-			case GL_RGB:
-				tex->format=GL_RGB;
-				break;
-			case GL_RGBA:
-				tex->format=GL_RGBA;
-#else
 			case GL_INTENSITY4:
 				if (GameArg.DbgGlLuminance4Alpha4Ok){
 					tex->internalformat=GL_LUMINANCE4_ALPHA4;
@@ -1448,13 +1372,9 @@ int tex_format_verify(ogl_texture *tex){
 					break;
 				}//note how it will fall through here if the statement is false
 			case GL_RGBA2:
-#if defined(__APPLE__) && defined(__MACH__)
-			case GL_RGB8:	// Quartz doesn't support RGB only
-#endif
 				tex->internalformat = ogl_rgba_internalformat;
 				tex->format=GL_RGBA;
 				break;
-#endif // OGLES
 			default:
 				glmprintf((0,"...no tex format to fall back on\n"));
 				return 1;
@@ -1484,7 +1404,7 @@ void tex_set_size1(ogl_texture *tex,int dbits,int bits,int w, int h){
 void tex_set_size(ogl_texture *tex){
 	GLint w,h;
 	int bi=16,a=0;
-#ifndef OGLES
+
 	if (GameArg.DbgGlGetTexLevelParamOk){
 		GLint t;
 		glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_WIDTH,&w);
@@ -1497,7 +1417,6 @@ void tex_set_size(ogl_texture *tex){
 		glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_ALPHA_SIZE,&t);a+=t;
 	}
 	else
-#endif
 	{
 		w=tex->tw;
 		h=tex->th;
@@ -1513,11 +1432,9 @@ void tex_set_size(ogl_texture *tex){
 		case GL_RGBA:
 			bi=16;
 			break;
-#ifndef OGLES
 		case GL_COLOR_INDEX:
 			bi = 8;
 			break;
-#endif
 		default:
 			Error("tex_set_size unknown texformat\n");
 			break;
@@ -1569,25 +1486,20 @@ int ogl_loadtexture (unsigned char *data, int dxo, int dyo, ogl_texture *tex, in
 	}
 	// Generate OpenGL texture IDs.
 	glGenTextures (1, &tex->handle);
-#ifndef OGLES
+
 	//set priority
 	glPrioritizeTextures (1, &tex->handle, &tex->prio);
-#endif
+
 	// Give our data to OpenGL.
 	OGL_BINDTEXTURE(tex->handle);
 	glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	if (texfilt)
 	{
-#ifdef OGLES // in OpenGL ES 1.1 the mipmaps are automatically generated by a parameter
-		glTexParameteri (GL_TEXTURE_2D, GL_GENERATE_MIPMAP, texfilt ? GL_TRUE : GL_FALSE);
-#endif
 		glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (texfilt>=2?GL_LINEAR_MIPMAP_LINEAR:GL_LINEAR_MIPMAP_NEAREST));
-#ifndef OGLES
 		if (texfilt >= 3 && ogl_maxanisotropy > 1.0)
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, ogl_maxanisotropy);
-#endif
 	}
 	else
 	{
@@ -1595,7 +1507,6 @@ int ogl_loadtexture (unsigned char *data, int dxo, int dyo, ogl_texture *tex, in
 		glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	}
 
-#ifndef OGLES // see comment above
 	if (texfilt)
 	{
 		gluBuild2DMipmaps (
@@ -1605,7 +1516,6 @@ int ogl_loadtexture (unsigned char *data, int dxo, int dyo, ogl_texture *tex, in
 				bufP);
 	}
 	else
-#endif
 	{
 		glTexImage2D (
 			GL_TEXTURE_2D, 0, tex->internalformat,
@@ -1624,45 +1534,13 @@ unsigned char decodebuf[1024*1024];
 void ogl_loadbmtexture_f(grs_bitmap *bm, int texfilt)
 {
 	unsigned char *buf;
-#ifdef HAVE_LIBPNG
-	char *bitmapname;
-#endif
 
 	while (bm->bm_parent)
 		bm=bm->bm_parent;
 	if (bm->gltexture && bm->gltexture->handle > 0)
 		return;
 	buf=bm->bm_data;
-#ifdef HAVE_LIBPNG
-	if ((bitmapname = piggy_game_bitmap_name(bm)))
-	{
-		char filename[64];
-		png_data pdata;
 
-		sprintf(filename, "textures/%s.png", bitmapname);
-		if (read_png(filename, &pdata))
-		{
-			con_printf(CON_DEBUG,"%s: %ux%ux%i p=%i(%i) c=%i a=%i chans=%i\n", filename, pdata.width, pdata.height, pdata.depth, pdata.paletted, pdata.num_palette, pdata.color, pdata.alpha, pdata.channels);
-			if (pdata.depth == 8 && pdata.color)
-			{
-				if (bm->gltexture == NULL)
-					ogl_init_texture(bm->gltexture = ogl_get_free_texture(), pdata.width, pdata.height, flags | ((pdata.alpha || bm->bm_flags & BM_FLAG_TRANSPARENT) ? OGL_FLAG_ALPHA : 0));
-				ogl_loadtexture(pdata.data, 0, 0, bm->gltexture, bm->bm_flags, pdata.paletted ? 0 : pdata.channels, texfilt);
-				free(pdata.data);
-				if (pdata.palette)
-					free(pdata.palette);
-				return;
-			}
-			else
-			{
-				con_printf(CON_DEBUG,"%s: unsupported texture format: must be rgb, rgba, or paletted, and depth 8\n", filename);
-				free(pdata.data);
-				if (pdata.palette)
-					free(pdata.palette);
-			}
-		}
-	}
-#endif
 	if (bm->gltexture == NULL){
  		ogl_init_texture(bm->gltexture = ogl_get_free_texture(), bm->bm_w, bm->bm_h, ((bm->bm_flags & (BM_FLAG_TRANSPARENT | BM_FLAG_SUPER_TRANSPARENT))? OGL_FLAG_ALPHA : 0));
 	}

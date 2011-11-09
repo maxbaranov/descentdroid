@@ -1,6 +1,7 @@
 CC := gcc
-CFLAGS := -Wall -DNETWORK -DOGL -I. -Iinclude/ -Imain/ -Iarch/include/
-LDFLAGS := -lphysfs -lm -lGL -lGLU -lSDL -lSDL_mixer
+CFLAGS := -g -Wall -DNETWORK -DOGL -I. -Iinclude/ -Imain/ -Iarch/include/
+LDFLAGS := -g -lphysfs -lm -lGL -lGLU -lSDL
+# -lSDL_mixer
 
 OBJS := 2d/2dsline.o \
   2d/bitblt.o \
@@ -111,21 +112,23 @@ OBJS := 2d/2dsline.o \
   texmap/ntmap.o \
   texmap/scanline.o \
   main/multibot.o \
-  arch/hal/digi_audio.o \
+  arch/hal/digi_null.o \
   arch/hal/digi.o \
-  arch/hal/digi_mixer.o \
-  arch/hal/digi_mixer_music.o \
   arch/hal/event.o \
   arch/hal/gr.o \
+  arch/hal/ogl.o \
   arch/hal/init.o \
   arch/hal/joy.o \
-  arch/hal/jukebox.o \
   arch/hal/key.o \
   arch/hal/mouse.o \
-  arch/hal/ogl.o \
   arch/hal/rbaudio.o \
   arch/hal/timer.o \
   arch/hal/window.o
+
+#  arch/hal/digi_mixer_music.o \
+#  arch/hal/digi_mixer.o \
+#  arch/hal/jukebox.o \
+
 
 #  main/net_udp.o \
 #  main/net_ipx.o \
