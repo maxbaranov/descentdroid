@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
+
 int  gameloop_init(int argc, char *argv[]);
 int  gameloop_tick(void);
 void gameloop_cleanup(void);

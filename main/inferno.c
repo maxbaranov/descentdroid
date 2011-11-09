@@ -428,6 +428,7 @@ int gameloop_tick(void) {
   } else if(gameloop_state == 3 ) {
 	WriteConfigFile();
 	show_order_form();
+	gameloop_state = 4;
   } else {
     return 1;
   }

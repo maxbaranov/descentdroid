@@ -9,6 +9,16 @@ typedef enum {
   eEventKey_None = 0x00,
   eEventKey_L1,
   eEventKey_R1,
+  eEventKey_START,
+  eEventKey_SELECT,
+  eEventKey_DPAD_UP,
+  eEventKey_DPAD_DOWN,
+  eEventKey_DPAD_LEFT,
+  eEventKey_DPAD_RIGHT,
+  eEventKey_CROSS,
+  eEventKey_SQUARE,
+  eEventKey_TRIANGLE,
+  eEventKey_CIRCLE,
 } eEventKey;
 
 typedef struct {
@@ -24,3 +34,6 @@ typedef struct {
 
 int IPCEvent_Post(IPCEvent_t *pEv);
 int IPCEvent_Poll(IPCEvent_t *pEv);
+
+void IPCQuitApp(void);
+int  IPCWantsToQuit(void);

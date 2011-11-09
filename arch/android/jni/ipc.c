@@ -46,3 +46,12 @@ int IPCEvent_Poll(IPCEvent_t *pEv) {
 
   return -1;
 }
+
+static int bWantsToQuit = 0;
+void IPCQuitApp(void) {
+  bWantsToQuit = 1;
+}
+
+int  IPCWantsToQuit(void) {
+  return bWantsToQuit;
+}

@@ -186,15 +186,13 @@ int show_titles(void)
   }
 
   if (GameArg.SysNoTitles)
-    return;
+    return 1;
 
   strcpy(publisher, "macplay.pcx");	// Mac Shareware
   if (!PHYSFSX_exists(publisher,1))
     strcpy(publisher, "mplaycd.pcx");	// Mac Registered
   if (!PHYSFSX_exists(publisher,1))
     strcpy(publisher, "iplogo1.pcx");	// PC. Only down here because it's lowres ;-)
-
-  return 1;
 
   if(state == 0) {
     if( show_title_screen( publisher, 1, 1 ) == 0 )

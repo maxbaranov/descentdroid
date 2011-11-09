@@ -13,79 +13,117 @@
 #include "window.h"
 #include "timer.h"
 #include "main/config.h"
+
 #include "ipc.h"
+
+extern void key_handler(IPCEvent_t *event);
+#if 0
+extern void mouse_button_handler(SDL_MouseButtonEvent *mbe);
+extern void mouse_motion_handler(SDL_MouseMotionEvent *mme);
+extern void joy_button_handler(SDL_JoyButtonEvent *jbe);
+extern void joy_hat_handler(SDL_JoyHatEvent *jhe);
+extern int joy_axis_handler(SDL_JoyAxisEvent *jae);
+#endif
+extern void mouse_cursor_autohide();
+extern void mouse_toggle_cursor(int activate);
 
 static int initialised=0;
 
-typedef struct d_event_keycommand
+void event_poll()
 {
-        event_type      type;   // EVENT_KEY_COMMAND/RELEASE
-        int                     keycode;
-} d_event_keycommand;
-
-void key_setkeyd_pressed(int ndx,unsigned char val);
-
-void event_poll() {
-  IPCEvent_t ev;
-  d_event_keycommand descentevent;
+  IPCEvent_t event;
+  int clean_uniframe=1;
   window *wind = window_get_front();
-  int bIdle = 1;
+  int idle = 1;
+	
+  // If the front window changes, exit this loop, otherwise unintended behavior can occur
+  // like pressing 'Return' really fast at 'Difficulty Level' causing multiple games to be started
+  while ((wind == window_get_front()) && (IPCEvent_Poll(&event) == 0) )
+    {
+      switch(event.type) {
+      case eEventType_Key:
+	if (clean_uniframe)
+	  memset(unicode_frame_buffer,'\0',sizeof(unsigned char)*KEY_BUFFER_SIZE);
+	clean_uniframe=0;
+	key_handler(&event);
+	idle = 0;
+	break;
+#if 0
+      case SDL_MOUSEBUTTONDOWN:
+      case SDL_MOUSEBUTTONUP:
+	mouse_button_handler((SDL_MouseButtonEvent *)&event);
+	idle = 0;
+	break;
+      case SDL_MOUSEMOTION:
+	mouse_motion_handler((SDL_MouseMotionEvent *)&event);
+	idle = 0;
+	break;
+      case SDL_JOYBUTTONDOWN:
+      case SDL_JOYBUTTONUP:
+	joy_button_handler((SDL_JoyButtonEvent *)&event);
+	idle = 0;
+	break;
+      case SDL_JOYAXISMOTION:
+	if (joy_axis_handler((SDL_JoyAxisEvent *)&event))
+	  idle = 0;
+	break;
+      case SDL_JOYHATMOTION:
+	joy_hat_handler((SDL_JoyHatEvent *)&event);
+	idle = 0;
+	break;
+      case SDL_JOYBALLMOTION:
+	break;
+      case SDL_QUIT:
+	{
+	  d_event qevent = { EVENT_QUIT };
+	  call_default_handler(&qevent);
+	  idle = 0;
+	} 
+	break;
+#endif
+      }
+    }
 
-  while(wind == window_get_front() && IPCEvent_Poll(&ev) == 0 ) {
-    if( ev.key.state == 1 )
-      descentevent.type = EVENT_KEY_COMMAND;
-    else
-      descentevent.type = EVENT_KEY_RELEASE;
-    
-    if(      ev.key.key == eEventKey_L1 ) descentevent.keycode = 1;  // ESC
-    else if( ev.key.key == eEventKey_R1 ) descentevent.keycode = 28; // ENTER
-
-    key_setkeyd_pressed(descentevent.keycode,ev.key.state);
-
-    event_send((d_event*)&descentevent);
-
-    con_printf(CON_NORMAL,"Sending event.. type=%i, keycode=%i\n",descentevent.type,descentevent.keycode);
-    bIdle = 0;
-  }
-   
-  if( bIdle ) {
-    d_event ievent;
-
-    //con_printf(CON_NORMAL,"No events...\n");
-                
-    ievent.type = EVENT_IDLE;
-    event_send(&ievent);
-  }
-
+  // Send the idle event if there were no other events
+  if (idle)
+    {
+      d_event ievent;
+      
+      ievent.type = EVENT_IDLE;
+      event_send(&ievent);
+    }
+  
+  mouse_cursor_autohide();
 }
 
-void event_flush() {
-  IPCEvent_t ev;
-
-  while(IPCEvent_Poll(&ev) == 0 ) { }
+void event_flush()
+{
+	IPCEvent_t event;
+	
+	while( IPCEvent_Poll(&event));
 }
 
 int event_init()
 {
-  // We should now be active and responding to events.
-  initialised = 1;
+	// We should now be active and responding to events.
+	initialised = 1;
 
-  return 0;
+	return 0;
 }
 
 int (*default_handler)(d_event *event) = NULL;
 
 void set_default_handler(int (*handler)(d_event *event))
 {
-  default_handler = handler;
+	default_handler = handler;
 }
 
 int call_default_handler(d_event *event)
 {
-  if (default_handler)
-    return (*default_handler)(event);
+	if (default_handler)
+		return (*default_handler)(event);
 	
-  return 0;
+	return 0;
 }
 
 void event_send(d_event *event)
@@ -140,5 +178,12 @@ void event_process(void)
 
 void event_toggle_focus(int activate_focus)
 {
+#if 0
+	if (activate_focus && GameCfg.Grabinput)
+		SDL_WM_GrabInput(SDL_GRAB_ON);
+	else
+		SDL_WM_GrabInput(SDL_GRAB_OFF);
+#endif
+	mouse_toggle_cursor(!activate_focus);
 }
 
