@@ -40,14 +40,26 @@
 
 #ifndef OPENGLES
 #include <GL/glu.h>
+#else
+#include <EGL/egl.h>
+#include <GLES/gl.h>
 #endif
 
 int gr_installed = 0;
 int gl_initialized=0;
 int linedotscale=1; // scalar of glLinewidth and glPointSize - only calculated once when resolution changes
 
+static EGLSurface mysurface;
+static EGLDisplay mydisplay;
+
+void ogl_set_sd(EGLSurface s,EGLDisplay d) {
+  mysurface = s;
+  mydisplay = d;
+}
+
 void ogl_swap_buffers_internal(void)
 {
+  eglSwapBuffers(mydisplay,mysurface);
 }
 
 int ogl_init_window(int x, int y)
@@ -159,7 +171,7 @@ int gr_set_mode(u_int32_t mode)
 
 	if (!gr_check_mode(mode))
 	{
-		con_printf(CON_URGENT,"Cannot set %ix%i. Fallback to 640x480\n",w,h);
+		con_printf(CON_URGENT,"Cannot set %ix%i. Fallback to 854x480\n",w,h);
 		w=854;
 		h=480;
 		Game_screen_mode=mode=SM(w,h);

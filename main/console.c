@@ -9,6 +9,11 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
+
+#ifdef ANDROID
+#include <android/log.h>
+#endif
+
 #include "window.h"
 #include "console.h"
 #include "args.h"
@@ -53,7 +58,7 @@ void con_printf(int priority, char *fmt, ...)
 
 	memset(buffer,'\0',CON_LINE_LENGTH);
 
-	if (priority <= ((int)GameArg.DbgVerbose))
+	if (priority <= ((int)GameArg.DbgVerbose) || 1)
 	{
 		char *p1, *p2;
 
@@ -82,7 +87,11 @@ void con_printf(int priority, char *fmt, ...)
 		con_add_buffer_line(priority, buffer);
 
 		/* Print output to stdout */
+#ifndef ANDROID
 		printf("%s",buffer);
+#else
+		__android_log_print(ANDROID_LOG_DEBUG, "Descent", "%s", buffer );
+#endif
 
 		/* Print output to gamelog.txt */
 		if (gamelog_fp)

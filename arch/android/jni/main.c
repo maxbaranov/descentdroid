@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <android/log.h>
+#include <pthread.h>
 
 #include <EGL/egl.h>
 #include <GLES/gl.h>
@@ -14,8 +15,8 @@
 #include <android/log.h>
 #include <android_native_app_glue.h>
 
-#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
-#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "descent", __VA_ARGS__))
+#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "descent", __VA_ARGS__))
 
 #define QK_TAB				9
 #define QK_ENTER			13
@@ -236,17 +237,6 @@
 #define QK_UNDO				339
 #define QK_CONSOLE			340
 
-/* Function pointers to Quake3 code */
-int  (*q3main)(int argc, char **argv);
-void (*drawFrame)();
-void (*queueKeyEvent)(int key, int state);
-void (*queueMotionEvent)(int action, float x, float y, float pressure);
-void (*queueTrackballEvent)(int action, float x, float y);
-void (*queueJoystickEvent)(int axis, int value);
-void (*requestAudioData)();
-void (*setAudioCallbacks)(void *func, void *func2, void *func3);
-void (*setResolution)(int width, int height);
-
 /* Containts the path to /data/data/(package_name)/libs */
 static char* lib_dir=NULL;
 
@@ -263,164 +253,47 @@ typedef unsigned char BOOL;
 #define FALSE 0
 #define TRUE 1
 
-static BOOL neon_support()
-{
-    char buf[80];
-    FILE *fp = fopen("/proc/cpuinfo", "r");
-    if(!fp)
-    {
-        __android_log_print(ANDROID_LOG_DEBUG, "Quake", "Unable to open /proc/cpuinfo\n");
-        return FALSE;
-    }
-
-    while(fgets(buf, 80, fp) != NULL)
-    {
-        char *features = strstr(buf, "Features");
-
-        if(features)
-        {
-            char *feature;
-            features += strlen("Features");
-            feature = strtok(features, ": ");
-            while(feature)
-            {
-                if(!strcmp(feature, "neon"))
-                    return TRUE;
-
-                feature = strtok(NULL, ": ");
-            }
-            return FALSE;
-        }
-    }
-    return FALSE;
-}
-
-const char *get_quake3_library()
-{
-    /* We ship a library with Neon FPU support. This boosts performance a lot but it only works on a few CPUs. */
-    if(neon_support())
-        return "libquake3_neon.so";
-
-    return "libquake3.so";
-}
-
-void get_quake3_library_path(char *path)
-{
-    const char *libquake3 = get_quake3_library();
-    if(lib_dir)
-    {
-        sprintf(path, "%s/%s", lib_dir, libquake3);
-    }
-    else
-    {
-        __android_log_print(ANDROID_LOG_ERROR, "Quake_JNI", "Library path not set, trying /data/data/org.kwaak3/lib");
-        sprintf(path, "/data/data/org.kwaak3/lib/%s", libquake3);
-    }
-}
-
-static void load_libquake3()
-{
-    char libquake3_path[80];
-    get_quake3_library_path(libquake3_path);
-
-#ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake", "Attempting to load %s\n", libquake3_path);
-#endif
-
-    libdl = dlopen(libquake3_path, RTLD_NOW);
-    if(!libdl)
-    {
-        __android_log_print(ANDROID_LOG_ERROR, "Quake", "Unable to load libquake3.so: %s\n", dlerror());
-        return;
-    }
-
-    q3main = dlsym(libdl, "main");
-    drawFrame = dlsym(libdl, "nextFrame");
-    queueKeyEvent = dlsym(libdl, "queueKeyEvent");
-    queueMotionEvent = dlsym(libdl, "queueMotionEvent");
-    queueTrackballEvent = dlsym(libdl, "queueTrackballEvent");
-	queueJoystickEvent = dlsym(libdl, "queueJoystickEvent");
-    requestAudioData = dlsym(libdl, "requestAudioData");
-    setAudioCallbacks = dlsym(libdl, "setAudioCallbacks");
-    setResolution = dlsym(libdl, "setResolution");
-    init=1;
-}
-
 int GetPos()
 {
-    /*JNIEnv *env;
-    (*jVM)->GetEnv(jVM, (void**) &env, JNI_VERSION_1_4);
-#ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "getPos");
-#endif
-    return (*env)->CallIntMethod(env, kwaakAudioObj, android_getPos);
-	*/
-	return 0;
+  return 0;
 }
 
 void InitAudio(void *buffer, int size)
 {
-/*
-    JNIEnv *env;
-    jobject tmp;
-    (*jVM)->GetEnv(jVM, (void**) &env, JNI_VERSION_1_4);
-#ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "initAudio");
-#endif
-    tmp = (*env)->NewDirectByteBuffer(env, buffer, size);
-    audioBuffer = (jobject)(*env)->NewGlobalRef(env, tmp);
-
-    if(!audioBuffer) __android_log_print(ANDROID_LOG_ERROR, "Quake_JNI", "yikes, unable to initialize audio buffer");
-
-    return (*env)->CallVoidMethod(env, kwaakAudioObj, android_initAudio);
-	*/
 }
 
 void WriteAudio(int offset, int length)
 {
-/*
-    JNIEnv *env;
-    (*jVM)->GetEnv(jVM, (void**) &env, JNI_VERSION_1_4);
-#ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "writeAudio audioBuffer=%p offset=%d length=%d", audioBuffer, offset, length);
-#endif
-
-    (*env)->CallVoidMethod(env, kwaakAudioObj, android_writeAudio, audioBuffer, offset, length);
-	*/
 }
+#define DEBUG 1
 
 void OnLoad()
 {
 #ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "JNI_OnLoad called");
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "JNI_OnLoad called");
 #endif
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "JNI_OnLoad called");
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "JNI_OnLoad called");
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "JNI_OnLoad called");
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "JNI_OnLoad called");
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "JNI_OnLoad called");
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "JNI_OnLoad called");
-    if(!init) load_libquake3();
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "JNI_OnLoad called");
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "JNI_OnLoad called");
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "JNI_OnLoad called");
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "JNI_OnLoad called");
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "JNI_OnLoad called");
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "JNI_OnLoad called");
 }
 
-void EnableAudio(jboolean enable)
-{
-    audioEnabled = enable;
-}
+int  gameloop_init(int argc, char *argv[]);
+int  gameloop_tick(void);
+void gameloop_cleanup(void);
 
-void EnableBenchmark(jboolean enable)
-{
-    benchmarkEnabled = enable;
-}
+void *gamethread_fn(void *arg) {
+  char *argv[] = { "descent" };
 
-void EnableLightmaps(jboolean enable)
-{
-    lightmapsEnabled = enable;
-}
+  gameloop_init(1,argv);
 
-void ShowFramerate(jboolean enable)
-{
-    showFramerateEnabled = enable;
+  while(gameloop_tick() == 0) { }
+
+  gameloop_cleanup();
+
+  return NULL;
 }
 
 void InitGame(int width, int height)
@@ -428,109 +301,68 @@ void InitGame(int width, int height)
     char *argv[4];
     int argc=0;
 
-    /* TODO: integrate settings with quake3, right now there is no synchronization */
+    if(!init) {
 
-    if(!audioEnabled)
-    {
-        argv[argc] = strdup("+set s_initsound 0");
-        argc++;
-    }
+      pthread_t gameThread;
+      pthread_create(&gameThread,NULL,gamethread_fn,NULL);
 
-    if(lightmapsEnabled)
-        argv[argc] = strdup("+set r_vertexlight 0");
-    else
-        argv[argc] = strdup("+set r_vertexlight 1");
-    argc++;
-
-    if(showFramerateEnabled)
-        argv[argc] = strdup("+set cg_drawfps 1");
-    else
-        argv[argc] = strdup("+set cg_drawfps 0");
-    argc++;
-
-    if(benchmarkEnabled)
-    {
-        argv[argc] = strdup("+demo four +timedemo 1");
-        argc++;
+      //
+      init = 1;
     }
 
 #ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "initGame(%d, %d)", width, height);
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "initGame(%d, %d)", width, height);
 #endif
 
-    setAudioCallbacks(&GetPos, &WriteAudio, &InitAudio);
-    setResolution(width, height);
-
-    /* In the future we might want to pass arguments using argc/argv e.g. to start a benchmark at startup, to load a mod or whatever */
-    q3main(argc, argv);
+    //setAudioCallbacks(&GetPos, &WriteAudio, &InitAudio);
+    //setResolution(width, height);
 }
 
 void DrawFrame()
 {
 #ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "nextFrame()");
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "nextFrame()");
 #endif
-    if(drawFrame) drawFrame();
+
+    gameloop_tick();
 }
 
 void QueueKeyEvent(jint key, jint state)
 {
 #ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "queueKeyEvent(%d, %d)", key, state);
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "queueKeyEvent(%d, %d)", key, state);
 #endif
-    if(queueKeyEvent) queueKeyEvent(key, state);
+    //if(queueKeyEvent) queueKeyEvent(key, state);
 }
 
 void QueueMotionEvent(jint action, jfloat x, jfloat y, jfloat pressure)
 {
 #ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "queueMotionEvent(%d, %f, %f, %f)", action, x, y, pressure);
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "queueMotionEvent(%d, %f, %f, %f)", action, x, y, pressure);
 #endif
-    if(queueMotionEvent) queueMotionEvent(action, x, y, pressure);
+    //if(queueMotionEvent) queueMotionEvent(action, x, y, pressure);
 }
 
 void QueueTrackballEvent(jint action, jfloat x, jfloat y)
 {
 #ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "queueTrackballEvent(%d, %f, %f)", action, x, y);
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "queueTrackballEvent(%d, %f, %f)", action, x, y);
 #endif
-    if(queueTrackballEvent) queueTrackballEvent(action, x, y);
+    //if(queueTrackballEvent) queueTrackballEvent(action, x, y);
 }
 
 void QueueJoystickEvent(jint nAxis, jint nValue)
 {
 #ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "queueJoystickEvent(%d, %d)", nAxis, nValue);
+    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "queueJoystickEvent(%d, %d)", nAxis, nValue);
 #endif
-    if(queueJoystickEvent) queueJoystickEvent(nAxis, nValue);
+    //if(queueJoystickEvent) queueJoystickEvent(nAxis, nValue);
 }
 
 void RequestAudioData()
 {
-    if(requestAudioData) requestAudioData();
+  //if(requestAudioData) requestAudioData();
 }
-
-void SetLibraryDirectory(const char* szPath)
-{
-    jboolean iscopy;
-    //const jbyte *path = (*env)->GetStringUTFChars(env, jpath, &iscopy);
-    lib_dir = strdup(szPath);
-    //(*env)->ReleaseStringUTFChars(env, jpath, path);
-
-#ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Quake_JNI", "path=%s\n", lib_dir);
-#endif
-}
-
-
-
-
-
-
-
-
-
-
 
 /**
  * Shared state for our app.
@@ -551,6 +383,8 @@ struct engine
     int32_t height;
 };
 
+void ogl_set_sd(EGLSurface s,EGLDisplay d);
+
 /**
  * Initialize an EGL context for the current display.
  */
@@ -566,9 +400,9 @@ static int engine_init_display(struct engine* engine)
     const EGLint attribs[] = 
 	{
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-            EGL_BLUE_SIZE, 8,
-            EGL_GREEN_SIZE, 8,
-            EGL_RED_SIZE, 8,
+            EGL_BLUE_SIZE, 5,
+            EGL_GREEN_SIZE, 6,
+            EGL_RED_SIZE, 5,
     		EGL_DEPTH_SIZE, 8,
     		EGL_NONE
     };
@@ -620,6 +454,8 @@ static int engine_init_display(struct engine* engine)
     //glShadeModel(GL_SMOOTH);
     //glDisable(GL_DEPTH_TEST);
 
+    ogl_set_sd(surface,display);
+
     return 0;
 }
 
@@ -638,7 +474,7 @@ static void engine_draw_frame(struct engine* engine)
     //glClearColor(1,0,0,1);
     //glClear(GL_COLOR_BUFFER_BIT);
 
-	DrawFrame();
+    DrawFrame();
 	
     eglSwapBuffers(engine->display, engine->surface);
 }

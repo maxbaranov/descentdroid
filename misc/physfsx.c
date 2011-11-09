@@ -38,31 +38,7 @@ void PHYSFSX_init(int argc, char *argv[])
 	PHYSFS_init(argv[0]);
 	PHYSFS_permitSymbolicLinks(1);
 	
-#ifdef macintosh
-	strcpy(base_dir, PHYSFS_getBaseDir());
-	if (strstr(base_dir, ".app:Contents:MacOSClassic"))	// the Mac OS 9 program is still in the .app bundle
-	{
-		char *p;
-		
-		bundle = 1;
-		if (base_dir[strlen(base_dir) - 1] == ':')
-			base_dir[strlen(base_dir) - 1] = '\0';
-		p = strrchr(base_dir, ':'); *p = '\0';	// path to 'Contents'
-		p = strrchr(base_dir, ':'); *p = '\0';	// path to bundle
-		p = strrchr(base_dir, ':'); *p = '\0';	// path to directory containing bundle
-	}
-#endif
-	
-#if (defined(__APPLE__) && defined(__MACH__))	// others?
-	chdir(base_dir);	// make sure relative hogdir paths work
-#endif
-	
-#if defined(__unix__)
-# if !(defined(__APPLE__) && defined(__MACH__))
-	path = "~/.d1x-rebirth/";
-# else
-	path = "~/Library/Preferences/D1X Rebirth/";
-# endif
+	path = "/sdcard/d1x-rebirth.settings";
 	
 	if (path[0] == '~') // yes, this tilde can be put before non-unix paths.
 	{
@@ -106,7 +82,6 @@ void PHYSFSX_init(int argc, char *argv[])
 	}
 	
 	PHYSFS_addToSearchPath(PHYSFS_getWriteDir(), 1);
-#endif
 	
 	PHYSFS_addToSearchPath(base_dir, 1);
 	InitArgs( argc,argv );

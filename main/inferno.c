@@ -277,7 +277,7 @@ jmp_buf LeaveEvents;
 //	DESCENT by Parallax Software
 //		Descent Main
 
-int SecondMain(int argc, char *argv[])
+int gameloop_init(int argc, char *argv[])
 {
 	mem_init();
 #if defined(__linux__) || defined(ANDROID)
@@ -309,7 +309,11 @@ int SecondMain(int argc, char *argv[])
 	if (!PHYSFSX_checkSupportedArchiveTypes())
 		return(0);
 
+#ifdef ANDROID
+	if (! PHYSFSX_contfile_init("/sdcard/descent.hog", 1))
+#else
 	if (! PHYSFSX_contfile_init("descent.hog", 1))
+#endif
 		Error("Could not find a valid hog file (descent.hog)\nPossible locations are:\n"
 		      "---unknown--\n"
 			  "Or use the -hogdir option to specify an alternate location.");
@@ -358,25 +362,33 @@ int SecondMain(int argc, char *argv[])
 
 	set_default_handler(standard_handler);
 
-	show_titles();
+	return 0;
+}
 
-	set_screen_mode(SCREEN_MENU);
+int gameloop_state = 0;
 
-	con_printf( CON_DEBUG, "\nDoing gamedata_init..." );
-	gamedata_init();
+int gameloop_tick(void) {
 
-	if (GameArg.DbgNoRun)
-		return(0);
+  if( gameloop_state == 0 ) {
+    show_titles();
 
-	con_printf( CON_DEBUG, "\nInitializing texture caching system..." );
-	texmerge_init( 10 );		// 10 cache bitmaps
+    set_screen_mode(SCREEN_MENU);
+    
+    con_printf( CON_DEBUG, "\nDoing gamedata_init..." );
+    gamedata_init();
 
-	con_printf( CON_DEBUG, "\nRunning game...\n" );
-	init_game();
+    if (GameArg.DbgNoRun)
+      return(0);
 
-	Players[Player_num].callsign[0] = '\0';
+    con_printf( CON_DEBUG, "\nInitializing texture caching system..." );
+    texmerge_init( 10 );		// 10 cache bitmaps
 
-	key_flush();
+    con_printf( CON_DEBUG, "\nRunning game...\n" );
+    init_game();
+
+    Players[Player_num].callsign[0] = '\0';
+    
+    key_flush();
 
 	if(GameArg.SysPilot)
 	{
@@ -403,19 +415,31 @@ int SecondMain(int argc, char *argv[])
 			WriteConfigFile();
 		}
 	}
-
-
+	gameloop_state = 1;
+  } else if( gameloop_state == 1 ) {
 	Game_mode = GM_GAME_OVER;
+
 	DoMenu();
 
 	setjmp(LeaveEvents);
+	gameloop_state = 2;
+  } else if( gameloop_state == 2 ) {
 	while (window_get_front())
 		// Send events to windows and the default handler
 		event_process();
 
+	gameloop_state = 3;
+  } else if(gameloop_state == 3 ) {
 	WriteConfigFile();
 	show_order_form();
+  } else {
+    return 1;
+  }
 
+  return 0;
+}
+
+void gameloop_cleanup(void) {
 	con_printf( CON_DEBUG, "\nCleanup...\n" );
 	close_game();
 	texmerge_close();
@@ -427,5 +451,5 @@ int SecondMain(int argc, char *argv[])
 	free_mission();
 	PHYSFSX_removeArchiveContent();
 
-	return(0);		//presumably successful exit
+	return;		//presumably successful exit
 }
