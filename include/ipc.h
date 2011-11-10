@@ -19,6 +19,7 @@ typedef enum {
   eEventKey_SQUARE,
   eEventKey_TRIANGLE,
   eEventKey_CIRCLE,
+  eEventKey_Menu,
 } eEventKey;
 
 typedef struct {

@@ -58,11 +58,11 @@ key_props key_properties[256] = {
 { "=",      '=',    -1 },
 { "BSPC",   255,    -1 },
 { "TAB",    255,    -1 },
-{ "Q",      'q',    -1 },
+{ "Q",      'q',    eEventKey_TRIANGLE },
 { "W",      'w',    -1 },
 { "E",      'e',    -1 },
 { "R",      'r',    -1 },
-{ "T",      't',    -1 }, // 20
+{ "T",      't',    eEventKey_CIRCLE }, // 20
 { "Y",      'y',    eEventKey_L1 },
 { "U",      'u',    -1 },
 { "I",      'i',    -1 },
@@ -92,7 +92,7 @@ key_props key_properties[256] = {
 { "V",      'v',    -1 },
 { "B",      'b',    -1 },
 { "N",      'n',    -1 },
-{ "M",      'm',    -1 }, // 50
+{ "M",      'm',    eEventKey_Menu }, // 50
 { ",",      ',',    -1 },
 { ".",      '.',    -1 },
 { "/",      '/',    -1 },
@@ -437,7 +437,7 @@ void key_handler(IPCEvent_t *kevent)
 				(keycode & KEY_SHIFTED)	? "SHIFT" : "",
 				key_properties[keycode & 0xff].key_text
 				);
-		con_printf(CON_NORMAL,"Sending event.. type=%i, keycode=%i\n",event.type,event.keycode);
+		con_printf(CON_NORMAL,"Sending event.. type=%i, keycode=%i, state=%i\n",event.type,event.keycode);
 		event_send((d_event *)&event);
 	}
 }

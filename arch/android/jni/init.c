@@ -36,7 +36,8 @@ void arch_init(void)
 
 	key_init();
 
-	digi_select_system( SDLAUDIO_SYSTEM );
+	//digi_select_system(0); // NULL
+	digi_select_system(1);  // OpenSL
 
 	if (!GameArg.SndNoSound)
 		digi_init();

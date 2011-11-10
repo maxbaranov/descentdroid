@@ -200,14 +200,6 @@ void InitGame(struct engine* engine)
     //setResolution(width, height);
 }
 
-void QueueKeyEvent(jint key, jint state)
-{
-#ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, "Descent_JNI", "queueKeyEvent(%d, %d)", key, state);
-#endif
-    //if(queueKeyEvent) queueKeyEvent(key, state);
-}
-
 void QueueMotionEvent(jint action, jfloat x, jfloat y, jfloat pressure)
 {
 #ifdef DEBUG
@@ -289,7 +281,7 @@ static int androidKeyCodeToDescent(AInputEvent* aevent,int state)
     return 0;
   }
 
-  return -!!bHasEvent;
+  return 1;
 }
 
 /**
@@ -309,8 +301,9 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
       if( nKeyAction == AKEY_EVENT_ACTION_DOWN )
 	nValue = 1;
       int nDescentKey = androidKeyCodeToDescent(event,nValue);
+      return !nDescentKey;
     }
-    return 1;
+    break;
 		
   case AINPUT_EVENT_TYPE_MOTION:
     {
@@ -367,11 +360,13 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd)
   case APP_CMD_GAINED_FOCUS:
     // When our app gains focus, we start monitoring the accelerometer.
     if(engine->accelerometerSensor != NULL) {
+#if 0
       ASensorEventQueue_enableSensor(engine->sensorEventQueue,
 				     engine->accelerometerSensor);
       // We'd like to get 60 events per second (in us).
       ASensorEventQueue_setEventRate(engine->sensorEventQueue,
 				     engine->accelerometerSensor, (1000L/60)*1000);
+#endif
       engine->animating = 1;
     }
     break;

@@ -22,6 +22,7 @@
 #include <string.h>
 #include "digi.h"
 #include "digi_null.h"
+#include "digi_opensl.h"
 
 /* Sound system function pointers */
 
@@ -41,24 +42,43 @@ int  (*fptr_is_channel_playing)(int) = NULL;
 void (*fptr_stop_all_channels)() = NULL;
 void (*fptr_set_digi_volume)(int) = NULL;
 
+int  (*fptr_get_max_channels)() = NULL;
+
 void digi_select_system(int n) {
 	switch (n) {
-	case SDLAUDIO_SYSTEM:
+	case 0:
 	default:
-	con_printf(CON_NORMAL,"Using NULL audio\n");
-        fptr_init = digi_null_init;
-        fptr_close = digi_null_close;
-        fptr_reset = digi_null_reset;
-        fptr_set_channel_volume = digi_null_set_channel_volume;
-        fptr_set_channel_pan = digi_null_set_channel_pan;
-        fptr_start_sound = digi_null_start_sound;
-        fptr_stop_sound = digi_null_stop_sound;
-        fptr_end_sound = digi_null_end_sound;
-        fptr_is_sound_playing = digi_null_is_sound_playing;
-        fptr_is_channel_playing = digi_null_is_channel_playing;
-        fptr_stop_all_channels = digi_null_stop_all_channels;
-	fptr_set_digi_volume = digi_null_set_digi_volume;
- 	break;
+	  con_printf(CON_NORMAL,"Using NULL audio\n");
+	  fptr_init               = digi_null_init;
+	  fptr_close              = digi_null_close;
+	  fptr_reset              = digi_null_reset;
+	  fptr_set_channel_volume = digi_null_set_channel_volume;
+	  fptr_set_channel_pan    = digi_null_set_channel_pan;
+	  fptr_start_sound        = digi_null_start_sound;
+	  fptr_stop_sound         = digi_null_stop_sound;
+	  fptr_end_sound          = digi_null_end_sound;
+	  fptr_is_sound_playing   = digi_null_is_sound_playing;
+	  fptr_is_channel_playing = digi_null_is_channel_playing;
+	  fptr_stop_all_channels  = digi_null_stop_all_channels;
+	  fptr_set_digi_volume    = digi_null_set_digi_volume;
+	  fptr_get_max_channels   = digi_null_get_max_channels;
+	  break;
+	case 1: // OpenSL
+	  con_printf(CON_NORMAL,"Using OpenSL audio\n");
+	  fptr_init               = digi_opensl_init;
+	  fptr_close              = digi_opensl_close;
+	  fptr_reset              = digi_opensl_reset;
+	  fptr_set_channel_volume = digi_opensl_set_channel_volume;
+	  fptr_set_channel_pan    = digi_opensl_set_channel_pan;
+	  fptr_start_sound        = digi_opensl_start_sound;
+	  fptr_stop_sound         = digi_opensl_stop_sound;
+	  fptr_end_sound          = digi_opensl_end_sound;
+	  fptr_is_sound_playing   = digi_opensl_is_sound_playing;
+	  fptr_is_channel_playing = digi_opensl_is_channel_playing;
+	  fptr_stop_all_channels  = digi_opensl_stop_all_channels;
+	  fptr_set_digi_volume    = digi_opensl_set_digi_volume;
+	  fptr_get_max_channels   = digi_opensl_get_max_channels;
+	  break;
 	}
 }
 
@@ -96,5 +116,5 @@ int  digi_is_sound_playing(int soundno) { return fptr_is_sound_playing(soundno);
 int  digi_is_channel_playing(int channel) { return fptr_is_channel_playing(channel); }
 void digi_stop_all_channels() { fptr_stop_all_channels(); }
 void digi_set_digi_volume(int dvolume) { fptr_set_digi_volume(dvolume); }
-
+int digi_get_max_channels() { return fptr_get_max_channels(); }
 

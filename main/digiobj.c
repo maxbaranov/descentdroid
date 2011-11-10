@@ -302,7 +302,7 @@ void digi_start_sound_object(int i)
 // -- MK, 2/22/96 -- 		newdemo_record_sound_3d_once( digi_unxlat_sound(SoundObjects[i].soundnum), SoundObjects[i].pan, SoundObjects[i].volume );
 
 	// only use up to half the sound channels for "permanent" sounts
-	if ((SoundObjects[i].flags & SOF_PERMANENT) && (N_active_sound_objects >= max(1, digi_max_channels / 4)))
+	if ((SoundObjects[i].flags & SOF_PERMANENT) && (N_active_sound_objects >= max(1, digi_get_max_channels() / 4)))
 		return;
 
 	// start the sample playing

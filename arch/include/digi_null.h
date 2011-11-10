@@ -16,5 +16,6 @@ void digi_null_stop_sound(int );
 void digi_null_end_sound(int );
 void digi_null_set_digi_volume(int);
 void digi_null_debug();
+int  digi_null_get_max_channels();
 
 #endif

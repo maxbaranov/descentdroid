@@ -15,7 +15,7 @@
 #include "kconfig.h"
 #include "config.h"
 
-int digi_max_channels = 16;
+//int digi_max_channels = 16;
 
 /* Initialise audio devices. */
 int digi_null_init()
