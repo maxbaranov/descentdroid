@@ -468,9 +468,9 @@ void key_init()
 
 void key_flush()
 {
-#if 0
+#if 1
  	int i;
-	Uint8 *keystate = SDL_GetKeyState(NULL);
+	//Uint8 *keystate = SDL_GetKeyState(NULL);
 
 	if (!Installed)
 		key_init();
@@ -480,12 +480,14 @@ void key_flush()
 		unicode_frame_buffer[i] = '\0';
 
 	for (i=0; i<256; i++ )	{
+#if 0
 		if (key_ismodlck(i) == KEY_ISLCK && keystate[key_properties[i].sym] && !GameArg.CtlNoStickyKeys) // do not flush status of sticky keys
 		{
 			keyd_pressed[i] = 1;
 			key_data.state[i] = 0;
 		}
 		else
+#endif
 		{
 			keyd_pressed[i] = 0;
 			key_data.state[i] = 1;

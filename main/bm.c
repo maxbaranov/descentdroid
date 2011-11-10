@@ -205,6 +205,7 @@ void properties_read_cmp(PHYSFS_file * fp)
 	player_ship_read(&only_player_ship, fp);
 	
 	Num_cockpits = PHYSFSX_readInt(fp);
+	printf("Number of cockpits=%i\n",Num_cockpits);
 	bitmap_index_read_n(cockpit_bitmap, N_COCKPIT_BITMAPS, fp);
 	
 	PHYSFS_read( fp, Sounds, sizeof(ubyte), MAX_SOUNDS );

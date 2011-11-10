@@ -94,7 +94,10 @@ int calc_best_gun(int num_guns, vms_vector *gun_pos, vms_vector *gun_dir, vms_ve
 		}
 	}
 
-	Assert(best_gun != -1);		// Contact Mike.  This is impossible.  Or maybe you're getting an unnormalized vector somewhere.
+	//Assert(best_gun != -1);		// Contact Mike.  This is impossible.  Or maybe you're getting an unnormalized vector somewhere.
+
+	if( best_gun == -1 ) 
+	  return -1;
 
 	if (best_dot < 0)
 		return -1;

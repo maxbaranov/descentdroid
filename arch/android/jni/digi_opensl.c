@@ -58,6 +58,7 @@ static struct audio_engine ae;
 
 static void digi_opensl_done(struct audio_buffer *b) {
 }
+
 static void buffer_finished(SLAndroidSimpleBufferQueueItf bq, void *context) {
   struct audio_buffer *b = (struct audio_buffer *)context;
 
@@ -218,8 +219,6 @@ int digi_opensl_start_sound(short soundnum, fix volume, int pan, int looping, in
 
     if( !ae.buffer[i].isPlaying ) {
       struct audio_buffer *b;
-
-      con_printf(CON_NORMAL,"Should have queued audio here\n");
 
       b = &ae.buffer[i];
       b->isPlaying = 1;

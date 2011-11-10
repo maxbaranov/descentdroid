@@ -1417,7 +1417,7 @@ void bm_read_some_file(int skip)
 		bitmap = bm_load_sub(skip, arg);
 		Assert( Num_cockpits < N_COCKPIT_BITMAPS );
 		cockpit_bitmap[Num_cockpits++] = bitmap;
-
+		con_printf(CON_NORMAL,"Loaded cockpit %i\n",Num_cockpits-1);
 		//bm_flag = BM_NONE;
 		}
 		break;

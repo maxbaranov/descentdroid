@@ -96,7 +96,7 @@ extern int piggy_page_flushed;
 
 // DPH (17/9/98): Mod to use static inline function rather than #define under
 // linux, as the #define has problems with linefeeds.
-#ifdef __LINUX__
+#if defined(__LINUX__) || defined(ANDROID) || defined(__linux__)
 #define PIGGY_PAGE_IN(bmp) _piggy_page_in(bmp)
 static inline void _piggy_page_in(bitmap_index bmp)
 {

@@ -393,6 +393,8 @@ void toggle_cockpit()
 {
 	int new_mode=CM_FULL_SCREEN;
 
+	con_printf(CON_NORMAL,"Entered\n");
+
 	if (Rear_view || Player_is_dead)
 		return;
 
@@ -407,11 +409,17 @@ void toggle_cockpit()
 		case CM_FULL_SCREEN:
 			new_mode = CM_FULL_COCKPIT;
 			break;
+	default:
+	  return;
 	}
 
+	con_printf(CON_NORMAL,"Pre select_cockpit\n");
 	select_cockpit(new_mode);
+	con_printf(CON_NORMAL,"Pre HUD_clear_messages\n");
 	HUD_clear_messages();
+	con_printf(CON_NORMAL,"Pre new_mode\n");
 	PlayerCfg.CockpitMode[0] = new_mode;
+	con_printf(CON_NORMAL,"Pre write_player_file\n");
 	write_player_file();
 }
 
@@ -422,12 +430,17 @@ extern void ogl_loadbmtexture(grs_bitmap *bm);
 void update_cockpits()
 {
 	grs_bitmap * bm;
-	PIGGY_PAGE_IN(cockpit_bitmap[PlayerCfg.CockpitMode[1]]);
-	bm = &GameBitmaps[cockpit_bitmap[PlayerCfg.CockpitMode[1]].index];
+	bitmap_index bmi;
+
+	if( PlayerCfg.CockpitMode[1] != CM_LETTERBOX ) {
+	  bmi = cockpit_bitmap[PlayerCfg.CockpitMode[1]];
+	  PIGGY_PAGE_IN(bmi);
+	  bm = &GameBitmaps[cockpit_bitmap[PlayerCfg.CockpitMode[1]].index];
+	}
 	
 	//Redraw the on-screen cockpit bitmaps
 	if (VR_render_mode != VR_NONE )	return;
-	
+
 	switch( PlayerCfg.CockpitMode[1] )	{
 		case CM_FULL_COCKPIT:
 			gr_set_current_canvas(NULL);
@@ -464,8 +477,9 @@ void update_cockpits()
 	
 	if (PlayerCfg.CockpitMode[1] != last_drawn_cockpit)
 		last_drawn_cockpit = PlayerCfg.CockpitMode[1];
-	else
+	else {
 		return;
+	}
 	
 	if (PlayerCfg.CockpitMode[1]==CM_FULL_COCKPIT || PlayerCfg.CockpitMode[1]==CM_STATUS_BAR)
 		init_gauges();

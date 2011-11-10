@@ -171,7 +171,8 @@ LOCAL_SRC_FILES := main.c \
   ../../../physfs-1.1.1/lzma/LzmaStateDecode.c
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../ $(LOCAL_PATH)/../../../include/ $(LOCAL_PATH)/../../../main/ $(LOCAL_PATH)/../../../arch/include/ $(LOCAL_PATH)/../../../physfs-1.1.1/
-LOCAL_CFLAGS := -DNETWORK -DOGL -DOPENGLES -D_SZ_ONE_DIRECTORY -Dunix -DPHYSFS_NO_CDROM_SUPPORT -DPHYSFS_SUPPORTS_HOG -DNDEBUG -O3 -fno-short-enums -ffunction-sections -funwind-tables -fstack-protector -ftree-vectorize -fsingle-precision-constant
+#LOCAL_CFLAGS := -DNETWORK -DOGL -DOPENGLES -D_SZ_ONE_DIRECTORY -Dunix -DPHYSFS_NO_CDROM_SUPPORT -DPHYSFS_SUPPORTS_HOG -DNDEBUG -O3 -fno-short-enums -ffunction-sections -funwind-tables -fstack-protector -ftree-vectorize -fsingle-precision-constant
+LOCAL_CFLAGS := -DNETWORK -DOGL -DOPENGLES -D_SZ_ONE_DIRECTORY -Dunix -DPHYSFS_NO_CDROM_SUPPORT -DPHYSFS_SUPPORTS_HOG -O0
 LOCAL_LDLIBS := -llog -landroid -lEGL -lGLESv1_CM -lOpenSLES
 LOCAL_STATIC_LIBRARIES := android_native_app_glue
 

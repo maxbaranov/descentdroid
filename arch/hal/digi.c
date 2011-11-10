@@ -97,4 +97,4 @@ int  digi_is_channel_playing(int channel) { return fptr_is_channel_playing(chann
 void digi_stop_all_channels() { fptr_stop_all_channels(); }
 void digi_set_digi_volume(int dvolume) { fptr_set_digi_volume(dvolume); }
 
-
+int  digi_get_max_channels(void) { return 16; }

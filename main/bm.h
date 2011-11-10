@@ -39,7 +39,7 @@ typedef struct {
 
 extern int Num_object_types;
 
-#define N_COCKPIT_BITMAPS 4
+#define N_COCKPIT_BITMAPS 5
 extern int Num_cockpits;
 extern bitmap_index cockpit_bitmap[N_COCKPIT_BITMAPS];
 
