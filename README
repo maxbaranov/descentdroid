@@ -1,0 +1,33 @@
+Disclaimer:
+This port of DXX-Rebirth to Android was done back in 2011, and haven't been tested since. It may or may not work on more modern versions of Android.
+The phone used for testing was the Sony Xperia Play, so that's how the keymapping was done.
+
+The RCS history is truncated, and I can't remember what version of Rebirth it was based on, so I don't know how usable this will be for anyone.
+
+How to build for Android (assuming SDK and NDK is installed in ~/android):
+cd arch/android/
+~/android/android-ndk-r6b/ndk-build -C . NDK_PROJECT_PATH=.
+~/android/android-sdk-linux/tools/android update project --path `pwd` --target android-10
+
+How to install it:
+ant debug install
+
+License:
+Unknown. The original Parallax source-code was licensed like this:
+
+THE COMPUTER CODE CONTAINED HEREIN IS THE SOLE PROPERTY OF PARALLAX
+SOFTWARE CORPORATION ("PARALLAX").  PARALLAX, IN DISTRIBUTING THE CODE TO
+END-USERS, AND SUBJECT TO ALL OF THE TERMS AND CONDITIONS HEREIN, GRANTS A
+ROYALTY-FREE, PERPETUAL LICENSE TO SUCH END-USERS FOR USE BY SUCH END-USERS
+IN USING, DISPLAYING,  AND CREATING DERIVATIVE WORKS THEREOF, SO LONG AS
+SUCH USE, DISPLAY OR CREATION IS FOR NON-COMMERCIAL, ROYALTY OR REVENUE
+FREE PURPOSES.  IN NO EVENT SHALL THE END-USER USE THE COMPUTER CODE
+CONTAINED HEREIN FOR REVENUE-BEARING PURPOSES.  THE END-USER UNDERSTANDS
+AND AGREES TO THE TERMS HEREIN AND ACCEPTS THE SAME BY USE OF THIS FILE.  
+COPYRIGHT 1993-1998 PARALLAX SOFTWARE CORPORATION.  ALL RIGHTS RESERVED.
+
+We make no warranties as to the usability or correctness of this code.
+
+DXX-Rebirth is licensed under a variety of licenses.
+
+The changes I have done can be licensed under any license that is compatible with both the original Parallax license, _as well as_ the DXX-Rebirth code.  (Good luck with that)
